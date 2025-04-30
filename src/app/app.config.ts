@@ -6,7 +6,7 @@ import { provideEffects } from '@ngrx/effects';
 import { provideStoreDevtools } from '@ngrx/store-devtools';
 import { routes } from './app.routes';
 import { mapReducer } from './store/map/map.reducer';
-import { MapEffects } from './store/map/map.effects';
+//import { MapEffects } from './store/map/map.effects';
 import { MapService } from './core/services/map.service';
 
 export const appConfig: ApplicationConfig = {
@@ -16,7 +16,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(),
     MapService,
     provideStore({ map: mapReducer }),
-    provideEffects([MapEffects]),
+    // provideEffects([MapEffects]),
     provideStoreDevtools({
       maxAge: 25,
       logOnly: false,
