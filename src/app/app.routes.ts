@@ -1,20 +1,20 @@
 import { Routes } from '@angular/router';
-import { WorldMapComponent } from './features/world-map/world-map.component';
-import { CountryMapComponent } from './features/country-map/country-map.component';
-import { ProvinceMapComponent } from './features/province-map/province-map.component';
+import { MapComponent } from './features/map/components/map/map.component';
+import { CountryMapComponent } from './features/map/components/country-map/country-map.component';
+import { ProvinceMapComponent } from './features/map/components/province-map/province-map.component';
 import { IranMapComponent } from './features/iran-map/iran-map.component';
 
 export const routes: Routes = [
   {
-    path: 'home',
-    component: WorldMapComponent,
+    path: '',
+    component: MapComponent,
   },
   {
-    path: 'home/:countryId',
+    path: ':countryCode',
     component: CountryMapComponent,
   },
   {
-    path: 'home/:countryId/:provinceId',
+    path: ':countryCode/:provinceCode',
     component: ProvinceMapComponent,
   },
   {
@@ -22,12 +22,7 @@ export const routes: Routes = [
     component: IranMapComponent,
   },
   {
-    path: '',
-    redirectTo: 'home',
-    pathMatch: 'full',
-  },
-  {
     path: '**',
-    redirectTo: 'home',
+    redirectTo: '',
   },
 ];

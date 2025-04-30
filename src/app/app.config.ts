@@ -1,22 +1,21 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
 import { provideStore } from '@ngrx/store';
 import { provideEffects } from '@ngrx/effects';
-import { provideStoreDevtools } from '@ngrx/store-devtools';
+import { provideHttpClient } from '@angular/common/http';
 import { routes } from './app.routes';
-import { mapReducer } from './store/map/map.reducer';
-//import { MapEffects } from './store/map/map.effects';
-import { MapService } from './core/services/map.service';
+import { reducers } from './store';
+import { MapEffects } from './store/map/map.effects';
+import { provideStoreDevtools } from '@ngrx/store-devtools';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideZoneChangeDetection({ eventCoalescing: true }),
+    provideAnimationsAsync(),
     provideRouter(routes),
     provideHttpClient(),
-    MapService,
-    provideStore({ map: mapReducer }),
-    // provideEffects([MapEffects]),
+    provideStore(reducers),
+    provideEffects([MapEffects]),
     provideStoreDevtools({
       maxAge: 25,
       logOnly: false,

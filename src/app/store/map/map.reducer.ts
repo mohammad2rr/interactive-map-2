@@ -1,84 +1,102 @@
 import { createReducer, on } from '@ngrx/store';
+import { MapState } from '../models/map.models';
 import * as MapActions from './map.actions';
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 
-export interface MapState {
-  worldMap: any;
-  countryMap: any;
-  provinceMap: any;
-  selectedCountry: string | null;
-  selectedProvince: string | null;
-  loading: boolean;
-  error: any;
-}
-
-export const initialState: MapState = {
-  worldMap: null,
-  countryMap: null,
-  provinceMap: null,
-  selectedCountry: null,
-  selectedProvince: null,
-  loading: false,
-  error: null,
+export const initialMapState: MapState = {
+  worldMap: {
+    countries: [],
+    loading: false,
+    error: null,
+  },
+  selectedCountry: {
+    country: null,
+    loading: false,
+    error: null,
+  },
+  selectedProvince: {
+    province: null,
+    loading: false,
+    error: null,
+  },
 };
 
 export const mapReducer = createReducer(
-  initialState,
+  initialMapState,
+  // World Map
   on(MapActions.loadWorldMap, (state) => ({
     ...state,
-    loading: true,
-    error: null,
+    worldMap: {
+      ...state.worldMap,
+      loading: true,
+      error: null,
+    },
   })),
-  on(MapActions.loadWorldMapSuccess, (state, { worldMap }) => ({
+  on(MapActions.loadWorldMapSuccess, (state, { countries }) => ({
     ...state,
-    worldMap,
-    loading: false,
+    worldMap: {
+      countries,
+      loading: false,
+      error: null,
+    },
   })),
   on(MapActions.loadWorldMapFailure, (state, { error }) => ({
     ...state,
-    error,
-    loading: false,
+    worldMap: {
+      ...state.worldMap,
+      loading: false,
+      error,
+    },
   })),
-
-  on(MapActions.selectCountry, (state, { countryId }) => ({
-    ...state,
-    selectedCountry: countryId,
-    selectedProvince: null,
-  })),
+  // Country Map
   on(MapActions.loadCountryMap, (state) => ({
     ...state,
-    loading: true,
-    error: null,
+    selectedCountry: {
+      ...state.selectedCountry,
+      loading: true,
+      error: null,
+    },
   })),
-  on(MapActions.loadCountryMapSuccess, (state, { countryMap }) => ({
+  on(MapActions.loadCountryMapSuccess, (state, { country }) => ({
     ...state,
-    countryMap,
-    loading: false,
+    selectedCountry: {
+      country,
+      loading: false,
+      error: null,
+    },
   })),
   on(MapActions.loadCountryMapFailure, (state, { error }) => ({
     ...state,
-    error,
-    loading: false,
+    selectedCountry: {
+      ...state.selectedCountry,
+      loading: false,
+      error,
+    },
   })),
-
-  on(MapActions.selectProvince, (state, { provinceId }) => ({
-    ...state,
-    selectedProvince: provinceId,
-  })),
+  // Province Map
   on(MapActions.loadProvinceMap, (state) => ({
     ...state,
-    loading: true,
-    error: null,
+    selectedProvince: {
+      ...state.selectedProvince,
+      loading: true,
+      error: null,
+    },
   })),
-  on(MapActions.loadProvinceMapSuccess, (state, { provinceMap }) => ({
+  on(MapActions.loadProvinceMapSuccess, (state, { province }) => ({
     ...state,
-    provinceMap,
-    loading: false,
+    selectedProvince: {
+      province,
+      loading: false,
+      error: null,
+    },
   })),
   on(MapActions.loadProvinceMapFailure, (state, { error }) => ({
     ...state,
-    error,
-    loading: false,
+    selectedProvince: {
+      ...state.selectedProvince,
+      loading: false,
+      error,
+    },
   }))
 );
 
@@ -90,22 +108,12 @@ export const selectWorldMap = createSelector(
   (state: MapState) => state.worldMap
 );
 
-export const selectCountryMap = createSelector(
+export const selectSelectedCountry = createSelector(
   selectMapState,
-  (state: MapState) => state.countryMap
+  (state: MapState) => state.selectedCountry
 );
 
-export const selectProvinceMap = createSelector(
+export const selectSelectedProvince = createSelector(
   selectMapState,
-  (state: MapState) => state.provinceMap
-);
-
-export const selectLoading = createSelector(
-  selectMapState,
-  (state: MapState) => state.loading
-);
-
-export const selectError = createSelector(
-  selectMapState,
-  (state: MapState) => state.error
+  (state: MapState) => state.selectedProvince
 );

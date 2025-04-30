@@ -1,53 +1,54 @@
-// import { Injectable } from '@angular/core';
-// import { Actions, createEffect, ofType } from '@ngrx/effects';
-// import { of } from 'rxjs';
-// import { map, mergeMap, catchError } from 'rxjs/operators';
-// import { HttpClient } from '@angular/common/http';
-// import * as MapActions from './map.actions';
+import { Injectable, inject } from '@angular/core';
+import { Actions, createEffect, ofType } from '@ngrx/effects';
+import { of } from 'rxjs';
+import { map, mergeMap, catchError } from 'rxjs/operators';
+import { MapService } from '../../core/services/map.service';
+import * as MapActions from './map.actions';
 
-// @Injectable()
-// export class MapEffects {
-//   loadWorldMap$ = createEffect(() =>
-//     this.actions$.pipe(
-//       ofType(MapActions.loadWorldMap),
-//       mergeMap(() =>
-//         this.http.get('assets/world.json').pipe(
-//           map((worldMap) => MapActions.loadWorldMapSuccess({ worldMap })),
-//           catchError((error) => of(MapActions.loadWorldMapFailure({ error })))
-//         )
-//       )
-//     )
-//   );
+@Injectable()
+export class MapEffects {
+  private actions$ = inject(Actions);
+  private mapService = inject(MapService);
 
-//   loadCountryMap$ = createEffect(() =>
-//     this.actions$.pipe(
-//       ofType(MapActions.loadCountryMap),
-//       mergeMap(({ countryId }) =>
-//         this.http.get(`assets/countries/${countryId}.json`).pipe(
-//           map((countryMap) => MapActions.loadCountryMapSuccess({ countryMap })),
-//           catchError((error) => of(MapActions.loadCountryMapFailure({ error })))
-//         )
-//       )
-//     )
-//   );
+  loadWorldMap$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(MapActions.loadWorldMap),
+      mergeMap(() =>
+        this.mapService.getWorldMap().pipe(
+          map((countries) => MapActions.loadWorldMapSuccess({ countries })),
+          catchError((error) =>
+            of(MapActions.loadWorldMapFailure({ error: error.message }))
+          )
+        )
+      )
+    );
+  });
 
-//   loadProvinceMap$ = createEffect(() =>
-//     this.actions$.pipe(
-//       ofType(MapActions.loadProvinceMap),
-//       mergeMap(({ countryId, provinceId }) =>
-//         this.http
-//           .get(`assets/countries/${countryId}/provinces/${provinceId}.json`)
-//           .pipe(
-//             map((provinceMap) =>
-//               MapActions.loadProvinceMapSuccess({ provinceMap })
-//             ),
-//             catchError((error) =>
-//               of(MapActions.loadProvinceMapFailure({ error }))
-//             )
-//           )
-//       )
-//     )
-//   );
+  loadCountryMap$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(MapActions.loadCountryMap),
+      mergeMap(({ countryCode }) =>
+        this.mapService.getCountryMap(countryCode).pipe(
+          map((country) => MapActions.loadCountryMapSuccess({ country })),
+          catchError((error) =>
+            of(MapActions.loadCountryMapFailure({ error: error.message }))
+          )
+        )
+      )
+    );
+  });
 
-//   constructor(private actions$: Actions, private http: HttpClient) {}
-// }
+  loadProvinceMap$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(MapActions.loadProvinceMap),
+      mergeMap(({ countryCode, provinceCode }) =>
+        this.mapService.getProvinceMap(countryCode, provinceCode).pipe(
+          map((province) => MapActions.loadProvinceMapSuccess({ province })),
+          catchError((error) =>
+            of(MapActions.loadProvinceMapFailure({ error: error.message }))
+          )
+        )
+      )
+    );
+  });
+}

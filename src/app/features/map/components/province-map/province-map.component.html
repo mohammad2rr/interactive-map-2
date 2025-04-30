@@ -1,0 +1,5 @@
+<div class="map-container" #mapContainer>
+  <div class="map-title" *ngIf="selectedProvince$ | async as province">
+    <h1>{{ province.name }}</h1>
+  </div>
+</div>

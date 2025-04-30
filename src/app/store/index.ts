@@ -1,6 +1,7 @@
 import { ActionReducerMap, MetaReducer } from '@ngrx/store';
 import { environment } from '../../environments/environment';
-import { mapReducer, MapState } from './map/map.reducer';
+import { mapReducer } from './map/map.reducer';
+import { MapState } from './models/map.models';
 
 export interface AppState {
   map: MapState;

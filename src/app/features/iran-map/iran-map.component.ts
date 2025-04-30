@@ -30,7 +30,7 @@ export class IranMapComponent implements OnInit {
   }
 
   private drawMap(): void {
-    d3.json('assets/maps/IRN/provinces.json').then((geojson: any) => {
+    d3.json('assets/maps/iran-map/iran-map.json').then((geojson: any) => {
       // Create a projection
       const projection = d3
         .geoMercator()
