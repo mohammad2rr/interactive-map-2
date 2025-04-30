@@ -114,8 +114,10 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private countryClicked(event: any, countryData: any): void {
+    console.log(countryData, 'country clicked');
+
     this.store.dispatch(
-      MapActions.selectCountry({ countryCode: countryData.id })
+      MapActions.loadCountryMap({ countryCode: countryData.code })
     );
   }
 

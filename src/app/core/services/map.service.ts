@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import * as d3 from 'd3';
 
 export interface Country {
@@ -84,9 +84,12 @@ export class MapService {
 
   getCountryMap(countryCode: string): Observable<Country> {
     return this.getWorldMap().pipe(
+      tap((countries: Country[]) =>
+        console.log(countries.find((c: Country) => c.code === countryCode))
+      ),
       map(
-        (countries) =>
-          countries.find((c) => c.code === countryCode) || {
+        (countries: Country[]) =>
+          countries.find((c: Country) => c.code === countryCode) || {
             code: countryCode,
             name: '',
             geometry: { type: 'Point', coordinates: [0, 0] },
