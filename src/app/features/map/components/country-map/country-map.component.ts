@@ -15,10 +15,12 @@ import { MapState } from '../../../../store/models/map.models';
 import * as MapActions from '../../../../store/map/map.actions';
 import { selectSelectedCountry } from '../../../../store/map/map.selectors';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 
-interface CountryFeature extends d3.ExtendedFeature {
+interface ProvinceFeature extends d3.ExtendedFeature {
   properties: {
-    name: string;
+    NAME_1: string;
+    NAME_2: string;
     [key: string]: any;
   };
 }
@@ -39,10 +41,16 @@ export class CountryMapComponent implements OnInit, OnDestroy, AfterViewInit {
   private width = 0;
   private height = 0;
   private margin = 50;
+  private provinceData: any;
+  private selectedProvince: ProvinceFeature | null = null;
 
   selectedCountry$: Observable<any>;
 
-  constructor(private store: Store, private route: ActivatedRoute) {
+  constructor(
+    private store: Store,
+    private route: ActivatedRoute,
+    private http: HttpClient
+  ) {
     this.selectedCountry$ = this.store.select(selectSelectedCountry);
   }
 
@@ -50,7 +58,19 @@ export class CountryMapComponent implements OnInit, OnDestroy, AfterViewInit {
     this.route.params.pipe(takeUntil(this.destroy$)).subscribe((params) => {
       const countryCode = params['countryCode'];
       this.store.dispatch(MapActions.loadCountryMap({ countryCode }));
+      this.loadProvinceData(countryCode);
     });
+  }
+
+  private loadProvinceData(countryCode: string): void {
+    this.http
+      .get(`/assets/maps/${countryCode}/provinces.json`)
+      .subscribe((data) => {
+        this.provinceData = data;
+        if (this.svg) {
+          this.drawProvinces();
+        }
+      });
   }
 
   ngAfterViewInit(): void {
@@ -82,11 +102,101 @@ export class CountryMapComponent implements OnInit, OnDestroy, AfterViewInit {
     this.selectedCountry$.pipe(takeUntil(this.destroy$)).subscribe((state) => {
       if (state.country) {
         this.drawMap(state.country);
+        if (this.provinceData) {
+          this.drawProvinces();
+        }
       }
     });
   }
 
-  private drawMap(country: CountryFeature): void {
+  private drawProvinces(): void {
+    if (!this.provinceData) return;
+
+    const projection = d3
+      .geoMercator()
+      .fitSize(
+        [this.width - 2 * this.margin, this.height - 2 * this.margin],
+        this.provinceData
+      );
+
+    const pathGenerator = d3.geoPath().projection(projection);
+
+    const provinces = this.svg
+      .selectAll('.province')
+      .data(this.provinceData.features)
+      .enter()
+      .append('path')
+      .attr('class', 'province')
+      .attr('d', pathGenerator)
+      .attr('fill', '#69b3a2')
+      .attr('stroke', '#fff')
+      .attr('stroke-width', 0.5)
+      .style('cursor', 'pointer')
+      .on('mouseover', (event: MouseEvent, d: ProvinceFeature) => {
+        d3.select(event.target as any)
+          .attr('fill', '#2ca02c')
+          .attr('stroke-width', 1.5);
+        this.showProvinceInfo(d);
+      })
+      .on('mouseout', (event: MouseEvent, d: ProvinceFeature) => {
+        if (this.selectedProvince !== d) {
+          d3.select(event.target as any)
+            .attr('fill', '#69b3a2')
+            .attr('stroke-width', 0.5);
+        }
+      })
+      .on('click', (event: MouseEvent, d: ProvinceFeature) => {
+        this.selectedProvince = d;
+        this.svg.selectAll('.province').attr('fill', '#69b3a2');
+        d3.select(event.target as any).attr('fill', '#2ca02c');
+        this.showProvinceInfo(d);
+      });
+  }
+
+  private showProvinceInfo(province: ProvinceFeature): void {
+    // Remove existing info box
+    this.svg.selectAll('.province-info').remove();
+
+    const infoBox = this.svg
+      .append('g')
+      .attr('class', 'province-info')
+      .attr('transform', `translate(20, 20)`);
+
+    infoBox
+      .append('rect')
+      .attr('width', 200)
+      .attr('height', 100)
+      .attr('fill', 'rgba(255, 255, 255, 0.8)')
+      .attr('rx', 5)
+      .attr('ry', 5);
+
+    const infoText = infoBox
+      .append('text')
+      .attr('x', 10)
+      .attr('y', 20)
+      .attr('font-size', '12px')
+      .attr('fill', '#333');
+
+    infoText
+      .append('tspan')
+      .text(`Province: ${province.properties.NAME_1}`)
+      .attr('x', 10)
+      .attr('dy', '1.2em');
+
+    infoText
+      .append('tspan')
+      .text(`County: ${province.properties.NAME_2}`)
+      .attr('x', 10)
+      .attr('dy', '1.2em');
+
+    infoText
+      .append('tspan')
+      .text(`Type: ${province.properties['ENGTYPE_2']}`)
+      .attr('x', 10)
+      .attr('dy', '1.2em');
+  }
+
+  private drawMap(country: any): void {
     // Clear previous map
     this.svg.selectAll('*').remove();
 
@@ -106,59 +216,9 @@ export class CountryMapComponent implements OnInit, OnDestroy, AfterViewInit {
       .append('path')
       .datum(country)
       .attr('d', pathGenerator)
-      .attr('fill', '#69b3a2')
+      .attr('fill', '#f0f0f0')
       .attr('stroke', '#fff')
       .attr('stroke-width', 0.5);
-
-    // Add country name
-    this.svg
-      .append('text')
-      .attr('x', pathGenerator.centroid(country)[0])
-      .attr('y', pathGenerator.centroid(country)[1])
-      .attr('text-anchor', 'middle')
-      .attr('font-size', '16px')
-      .attr('fill', '#333')
-      .text(country.properties.name);
-
-    // Add country information
-    const infoBox = this.svg.append('g').attr('transform', `translate(20, 20)`);
-
-    infoBox
-      .append('rect')
-      .attr('width', 200)
-      .attr('height', 100)
-      .attr('fill', 'rgba(255, 255, 255, 0.8)')
-      .attr('rx', 5)
-      .attr('ry', 5);
-
-    const infoText = infoBox
-      .append('text')
-      .attr('x', 10)
-      .attr('y', 20)
-      .attr('font-size', '12px')
-      .attr('fill', '#333');
-
-    infoText
-      .append('tspan')
-      .text(
-        `Population: ${
-          country.properties['POP_EST']?.toLocaleString() || 'N/A'
-        }`
-      )
-      .attr('x', 10)
-      .attr('dy', '1.2em');
-
-    infoText
-      .append('tspan')
-      .text(`GDP: $${country.properties['GDP_MD']?.toLocaleString() || 'N/A'}M`)
-      .attr('x', 10)
-      .attr('dy', '1.2em');
-
-    infoText
-      .append('tspan')
-      .text(`Region: ${country.properties['REGION_WB'] || 'N/A'}`)
-      .attr('x', 10)
-      .attr('dy', '1.2em');
   }
 
   private setupResizeListener(): void {
@@ -172,6 +232,9 @@ export class CountryMapComponent implements OnInit, OnDestroy, AfterViewInit {
           .subscribe((state) => {
             if (state.country) {
               this.drawMap(state.country);
+              if (this.provinceData) {
+                this.drawProvinces();
+              }
             }
           });
       }
