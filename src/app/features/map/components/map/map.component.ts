@@ -7,6 +7,7 @@ import {
   AfterViewInit,
 } from '@angular/core';
 import { Store } from '@ngrx/store';
+import { Router } from '@angular/router';
 import { Observable, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import * as d3 from 'd3';
@@ -30,7 +31,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
 
   mapState$: Observable<MapState>;
 
-  constructor(private store: Store) {
+  constructor(private store: Store, private router: Router) {
     this.mapState$ = this.store.select(selectMapState);
   }
 
@@ -119,6 +120,9 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     this.store.dispatch(
       MapActions.loadCountryMap({ countryCode: countryData.code })
     );
+
+    // Navigate to the country route
+    this.router.navigate([countryData.code]);
   }
 
   private countryHovered(event: any, countryData: any): void {

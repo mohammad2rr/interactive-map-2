@@ -19,7 +19,7 @@ import { CommonModule } from '@angular/common';
 interface CountryFeature extends d3.ExtendedFeature {
   properties: {
     name: string;
-    provinces?: d3.ExtendedFeature[];
+    [key: string]: any;
   };
 }
 
@@ -38,6 +38,7 @@ export class CountryMapComponent implements OnInit, OnDestroy, AfterViewInit {
   private path: any;
   private width = 0;
   private height = 0;
+  private margin = 50;
 
   selectedCountry$: Observable<any>;
 
@@ -71,10 +72,11 @@ export class CountryMapComponent implements OnInit, OnDestroy, AfterViewInit {
       .select(container)
       .append('svg')
       .attr('width', this.width)
-      .attr('height', this.height);
+      .attr('height', this.height)
+      .append('g')
+      .attr('transform', `translate(${this.margin},${this.margin})`);
 
     this.projection = d3.geoMercator().scale(1).translate([0, 0]);
-
     this.path = d3.geoPath().projection(this.projection);
 
     this.selectedCountry$.pipe(takeUntil(this.destroy$)).subscribe((state) => {
@@ -85,43 +87,78 @@ export class CountryMapComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private drawMap(country: CountryFeature): void {
-    const bounds = this.path.bounds(country);
-    const dx = bounds[1][0] - bounds[0][0];
-    const dy = bounds[1][1] - bounds[0][1];
-    const x = (bounds[0][0] + bounds[1][0]) / 2;
-    const y = (bounds[0][1] + bounds[1][1]) / 2;
-    const scale = 0.9 / Math.max(dx / this.width, dy / this.height);
-    const translate = [this.width / 2 - scale * x, this.height / 2 - scale * y];
+    // Clear previous map
+    this.svg.selectAll('*').remove();
 
-    this.projection.scale(scale).translate(translate);
+    // Create a projection that fits the country
+    const projection = d3
+      .geoMercator()
+      .fitSize(
+        [this.width - 2 * this.margin, this.height - 2 * this.margin],
+        country
+      );
 
+    // Update path generator with new projection
+    const pathGenerator = d3.geoPath().projection(projection);
+
+    // Draw the country
     this.svg
-      .selectAll('path')
-      .data([country])
-      .enter()
       .append('path')
-      .attr('d', this.path)
-      .attr('fill', '#ccc')
+      .datum(country)
+      .attr('d', pathGenerator)
+      .attr('fill', '#69b3a2')
       .attr('stroke', '#fff')
       .attr('stroke-width', 0.5);
 
-    if (country.properties.provinces) {
-      this.svg
-        .selectAll('.province')
-        .data(country.properties.provinces)
-        .enter()
-        .append('path')
-        .attr('class', 'province')
-        .attr('d', (d: d3.ExtendedFeature) => this.path(d))
-        .attr('fill', '#999')
-        .attr('stroke', '#fff')
-        .attr('stroke-width', 0.5)
-        .on('click', (event: any, d: any) => {
-          this.store.dispatch(
-            MapActions.selectProvince({ provinceCode: d.properties.code })
-          );
-        });
-    }
+    // Add country name
+    this.svg
+      .append('text')
+      .attr('x', pathGenerator.centroid(country)[0])
+      .attr('y', pathGenerator.centroid(country)[1])
+      .attr('text-anchor', 'middle')
+      .attr('font-size', '16px')
+      .attr('fill', '#333')
+      .text(country.properties.name);
+
+    // Add country information
+    const infoBox = this.svg.append('g').attr('transform', `translate(20, 20)`);
+
+    infoBox
+      .append('rect')
+      .attr('width', 200)
+      .attr('height', 100)
+      .attr('fill', 'rgba(255, 255, 255, 0.8)')
+      .attr('rx', 5)
+      .attr('ry', 5);
+
+    const infoText = infoBox
+      .append('text')
+      .attr('x', 10)
+      .attr('y', 20)
+      .attr('font-size', '12px')
+      .attr('fill', '#333');
+
+    infoText
+      .append('tspan')
+      .text(
+        `Population: ${
+          country.properties['POP_EST']?.toLocaleString() || 'N/A'
+        }`
+      )
+      .attr('x', 10)
+      .attr('dy', '1.2em');
+
+    infoText
+      .append('tspan')
+      .text(`GDP: $${country.properties['GDP_MD']?.toLocaleString() || 'N/A'}M`)
+      .attr('x', 10)
+      .attr('dy', '1.2em');
+
+    infoText
+      .append('tspan')
+      .text(`Region: ${country.properties['REGION_WB'] || 'N/A'}`)
+      .attr('x', 10)
+      .attr('dy', '1.2em');
   }
 
   private setupResizeListener(): void {
