@@ -28,7 +28,7 @@ export class MapEffects {
     return this.actions$.pipe(
       ofType(MapActions.loadCountryMap),
       mergeMap(({ countryCode }) =>
-        this.mapService.getCountryMap(countryCode).pipe(
+        this.mapService.getCountryData(countryCode).pipe(
           map((country) => MapActions.loadCountryMapSuccess({ country })),
           catchError((error) =>
             of(MapActions.loadCountryMapFailure({ error: error.message }))

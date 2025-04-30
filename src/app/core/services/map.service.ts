@@ -114,4 +114,22 @@ export class MapService {
       )
     );
   }
+
+  getCountryData(countryCode: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/${countryCode}/provinces.json`).pipe(
+      map((data: any) => {
+        return {
+          type: data.type,
+          name: data.name,
+          features: data.features.map((feature: any) => ({
+            code: feature.properties.GID_2,
+            name: feature.properties.NAME_2 || feature.properties.NAME_1,
+            geometry: feature.geometry,
+            countryCode: feature.properties.GID_0,
+            properties: feature.properties,
+          })),
+        };
+      })
+    );
+  }
 }
