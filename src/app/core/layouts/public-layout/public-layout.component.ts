@@ -1,15 +1,20 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { RouterOutlet, RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-public-layout',
   standalone: true,
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, RouterLink],
   template: `
     <div class="public-layout">
       <header>
         <nav>
-          <!-- Public navigation items -->
+          <a routerLink="/" routerLinkActive="active">Home</a>
+          <a routerLink="/about" routerLinkActive="active">About</a>
+          <a routerLink="/contact" routerLinkActive="active">Contact</a>
+          <a routerLink="/blog" routerLinkActive="active">Blog</a>
+          <a routerLink="/map" routerLinkActive="active">Map</a>
+          <a routerLink="/iran-map" routerLinkActive="active">Iran Map</a>
         </nav>
       </header>
       <main>
@@ -29,6 +34,25 @@ import { RouterOutlet } from '@angular/router';
       }
       main {
         flex: 1;
+      }
+      nav {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem;
+        background: #f5f5f5;
+      }
+      nav a {
+        text-decoration: none;
+        color: #333;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+      }
+      nav a:hover {
+        background: #e0e0e0;
+      }
+      nav a.active {
+        background: #007bff;
+        color: white;
       }
     `,
   ],
