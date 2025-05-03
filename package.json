@@ -23,6 +23,7 @@
     "@ngrx/entity": "^19.1.0",
     "@ngrx/store": "^19.1.0",
     "@ngrx/store-devtools": "^19.1.0",
+    "@popperjs/core": "^2.11.8",
     "@types/d3": "^7.4.3",
     "@types/topojson": "^3.2.6",
     "bootstrap": "^5.3.5",
