@@ -1,118 +1,82 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: 'admin' | 'moderator' | 'user';
+  status: 'active' | 'inactive' | 'suspended';
+  lastLogin: Date;
+  createdAt: Date;
+}
 
 @Component({
   selector: 'app-admin-users',
   standalone: true,
-  imports: [CommonModule],
-  template: `
-    <div class="users-container">
-      <h1>User Management</h1>
-      <div class="users-actions">
-        <button class="action-button">Add New User</button>
-        <button class="action-button">Import Users</button>
-        <button class="action-button">Export Users</button>
-      </div>
-
-      <div class="users-table">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let i of [1, 2, 3, 4, 5]">
-              <td>User {{ i }}</td>
-              <td>user{{ i }}.com</td>
-              <td>{{ i % 2 === 0 ? 'Admin' : 'User' }}</td>
-              <td>
-                <span class="status-badge" [class.active]="i % 2 === 0">
-                  {{ i % 2 === 0 ? 'Active' : 'Inactive' }}
-                </span>
-              </td>
-              <td>
-                <button class="icon-button">✏️</button>
-                <button class="icon-button">🗑️</button>
-                <button class="icon-button">🔒</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  `,
-  styles: [
-    `
-      .users-container {
-        padding: 2rem;
-      }
-      .users-actions {
-        display: flex;
-        gap: 1rem;
-        margin-bottom: 2rem;
-      }
-      .action-button {
-        background: #3498db;
-        color: white;
-        border: none;
-        padding: 0.75rem 1.5rem;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background 0.2s;
-      }
-      .action-button:hover {
-        background: #2980b9;
-      }
-      .users-table {
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      th,
-      td {
-        padding: 1rem;
-        text-align: left;
-        border-bottom: 1px solid #eee;
-      }
-      th {
-        background: #f8f9fa;
-        font-weight: 600;
-        color: #2c3e50;
-      }
-      .status-badge {
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-        font-size: 0.8rem;
-        background: #f5f5f5;
-        color: #666;
-      }
-      .status-badge.active {
-        background: #d4edda;
-        color: #155724;
-      }
-      .icon-button {
-        background: none;
-        border: none;
-        font-size: 1.2rem;
-        cursor: pointer;
-        padding: 0.5rem;
-        border-radius: 4px;
-        transition: background 0.2s;
-      }
-      .icon-button:hover {
-        background: #f5f5f5;
-      }
-    `,
-  ],
+  imports: [CommonModule, FormsModule],
+  templateUrl: './users.component.html',
+  styleUrls: ['./users.component.scss'],
 })
-export class UsersComponent {}
+export class UsersComponent {
+  users: User[] = [
+    {
+      id: 1,
+      name: 'John Doe',
+      email: 'john@example.com',
+      role: 'admin',
+      status: 'active',
+      lastLogin: new Date(),
+      createdAt: new Date(),
+    },
+    {
+      id: 2,
+      name: 'Jane Smith',
+      email: 'jane@example.com',
+      role: 'moderator',
+      status: 'active',
+      lastLogin: new Date(),
+      createdAt: new Date(),
+    },
+    {
+      id: 3,
+      name: 'Bob Johnson',
+      email: 'bob@example.com',
+      role: 'user',
+      status: 'suspended',
+      lastLogin: new Date(),
+      createdAt: new Date(),
+    },
+  ];
+
+  searchQuery = '';
+  selectedRole: string | null = null;
+  selectedStatus: string | null = null;
+
+  get filteredUsers() {
+    return this.users.filter((user) => {
+      const matchesSearch =
+        user.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        user.email.toLowerCase().includes(this.searchQuery.toLowerCase());
+      const matchesRole = !this.selectedRole || user.role === this.selectedRole;
+      const matchesStatus =
+        !this.selectedStatus || user.status === this.selectedStatus;
+      return matchesSearch && matchesRole && matchesStatus;
+    });
+  }
+
+  updateUserStatus(user: User, status: User['status']) {
+    user.status = status;
+  }
+
+  updateUserRole(user: User, role: User['role']) {
+    user.role = role;
+  }
+
+  deleteUser(user: User) {
+    if (confirm(`Are you sure you want to delete user ${user.name}?`)) {
+      this.users = this.users.filter((u) => u.id !== user.id);
+    }
+  }
+}

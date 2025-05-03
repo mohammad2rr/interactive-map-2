@@ -1,0 +1,91 @@
+<div class="maps-container">
+  <header class="maps-header">
+    <h1>Map Management</h1>
+    <div class="header-actions">
+      <button class="action-button primary">Create New Map</button>
+      <button class="action-button">Import Maps</button>
+      <button class="action-button">Export Maps</button>
+    </div>
+  </header>
+
+  <div class="filters-section">
+    <div class="search-box">
+      <input
+        type="text"
+        [(ngModel)]="searchQuery"
+        placeholder="Search maps..."
+      />
+    </div>
+    <div class="filter-controls">
+      <select [(ngModel)]="selectedStatus">
+        <option value="">All Status</option>
+        <option value="published">Published</option>
+        <option value="draft">Draft</option>
+        <option value="pending">Pending</option>
+        <option value="rejected">Rejected</option>
+      </select>
+      <select [(ngModel)]="selectedType">
+        <option value="">All Types</option>
+        <option value="public">Public</option>
+        <option value="private">Private</option>
+        <option value="shared">Shared</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="maps-list">
+    <div class="map-item" *ngFor="let map of filteredMaps">
+      <div class="map-info">
+        <div class="map-header">
+          <h3>{{ map.title }}</h3>
+          <div class="map-tags">
+            <span class="tag" *ngFor="let tag of map.tags">{{ tag }}</span>
+          </div>
+        </div>
+        <p class="map-description">{{ map.description }}</p>
+        <div class="map-meta">
+          <p>Author: {{ map.author }}</p>
+          <p>Created: {{ map.createdAt | date : "medium" }}</p>
+          <p>Last Modified: {{ map.lastModified | date : "medium" }}</p>
+          <p>Views: {{ map.views }}</p>
+        </div>
+      </div>
+      <div class="map-controls">
+        <div class="map-status">
+          <select
+            [(ngModel)]="map.status"
+            (change)="updateMapStatus(map, map.status)"
+            [style.backgroundColor]="getStatusColor(map.status)"
+          >
+            <option value="published">Published</option>
+            <option value="draft">Draft</option>
+            <option value="pending">Pending</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+        <div class="map-type">
+          <select
+            [(ngModel)]="map.type"
+            (change)="updateMapType(map, map.type)"
+            [style.backgroundColor]="getTypeColor(map.type)"
+          >
+            <option value="public">Public</option>
+            <option value="private">Private</option>
+            <option value="shared">Shared</option>
+          </select>
+        </div>
+      </div>
+      <div class="map-actions">
+        <button class="icon-button edit" title="Edit Map">✏️</button>
+        <button
+          class="icon-button delete"
+          (click)="deleteMap(map)"
+          title="Delete Map"
+        >
+          🗑️
+        </button>
+        <button class="icon-button view" title="View Map">👁️</button>
+      </div>
+    </div>
+  </div>
+</div>

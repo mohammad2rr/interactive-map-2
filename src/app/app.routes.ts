@@ -101,7 +101,7 @@ export const routes: Routes = [
           import('./features/user/dashboard/dashboard.component').then(
             (m) => m.DashboardComponent
           ),
-        title: 'Dashboard',
+        title: 'User Dashboard',
       },
       {
         path: 'maps',
@@ -171,7 +171,7 @@ export const routes: Routes = [
   {
     path: 'admin',
     component: AdminLayoutComponent,
-    // canActivate: [authGuard,adminGuard],
+    //canActivate: [authGuard, adminGuard],
     children: [
       {
         path: '',
@@ -185,6 +185,38 @@ export const routes: Routes = [
             (m) => m.DashboardComponent
           ),
         title: 'Admin Dashboard',
+      },
+      {
+        path: 'users',
+        loadComponent: () =>
+          import('./features/admin/users/users.component').then(
+            (m) => m.UsersComponent
+          ),
+        title: 'User Management',
+      },
+      {
+        path: 'content',
+        loadComponent: () =>
+          import('./features/admin/content/content.component').then(
+            (m) => m.ContentComponent
+          ),
+        title: 'Content Management',
+      },
+      {
+        path: 'maps',
+        loadComponent: () =>
+          import('./features/admin/maps/maps.component').then(
+            (m) => m.MapsComponent
+          ),
+        title: 'Map Management',
+      },
+      {
+        path: 'settings',
+        loadComponent: () =>
+          import('./features/admin/settings/settings.component').then(
+            (m) => m.SettingsComponent
+          ),
+        title: 'Admin Settings',
       },
     ],
   },

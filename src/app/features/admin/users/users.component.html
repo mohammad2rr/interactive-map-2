@@ -1,0 +1,89 @@
+<div class="users-container">
+  <header class="users-header">
+    <h1>User Management</h1>
+    <div class="header-actions">
+      <button class="action-button primary">Add New User</button>
+      <button class="action-button">Import Users</button>
+      <button class="action-button">Export Users</button>
+    </div>
+  </header>
+
+  <div class="filters-section">
+    <div class="search-box">
+      <input
+        type="text"
+        [(ngModel)]="searchQuery"
+        placeholder="Search users..."
+      />
+    </div>
+    <div class="filter-controls">
+      <select [(ngModel)]="selectedRole">
+        <option value="">All Roles</option>
+        <option value="admin">Admin</option>
+        <option value="moderator">Moderator</option>
+        <option value="user">User</option>
+      </select>
+      <select [(ngModel)]="selectedStatus">
+        <option value="">All Status</option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+        <option value="suspended">Suspended</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="users-table">
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Last Login</th>
+          <th>Created At</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of filteredUsers">
+          <td>{{ user.name }}</td>
+          <td>{{ user.email }}</td>
+          <td>
+            <select
+              [(ngModel)]="user.role"
+              (change)="updateUserRole(user, user.role)"
+            >
+              <option value="admin">Admin</option>
+              <option value="moderator">Moderator</option>
+              <option value="user">User</option>
+            </select>
+          </td>
+          <td>
+            <select
+              [(ngModel)]="user.status"
+              (change)="updateUserStatus(user, user.status)"
+            >
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="suspended">Suspended</option>
+            </select>
+          </td>
+          <td>{{ user.lastLogin | date : "medium" }}</td>
+          <td>{{ user.createdAt | date : "medium" }}</td>
+          <td class="actions">
+            <button class="icon-button edit" title="Edit User">✏️</button>
+            <button
+              class="icon-button delete"
+              (click)="deleteUser(user)"
+              title="Delete User"
+            >
+              🗑️
+            </button>
+            <button class="icon-button lock" title="Reset Password">🔒</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

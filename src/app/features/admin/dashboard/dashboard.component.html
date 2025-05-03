@@ -1,0 +1,159 @@
+<div class="admin-dashboard">
+  <header class="dashboard-header">
+    <h1>Admin Dashboard</h1>
+    <div class="quick-actions">
+      <button
+        *ngFor="let action of quickActions"
+        class="action-button"
+        (click)="action.action()"
+      >
+        <span class="material-icons">{{ action.icon }}</span>
+        {{ action.label }}
+      </button>
+    </div>
+  </header>
+
+  <div class="dashboard-grid">
+    <!-- Statistics Cards -->
+    <div class="statistics-section">
+      <div class="stat-card">
+        <h3>Total Users</h3>
+        <p class="stat-number">{{ users.length }}</p>
+        <p class="stat-label">Active Users</p>
+      </div>
+      <div class="stat-card">
+        <h3>Content Queue</h3>
+        <p class="stat-number">{{ contentQueue.length }}</p>
+        <p class="stat-label">Pending Reviews</p>
+      </div>
+      <div class="stat-card">
+        <h3>System Health</h3>
+        <p class="stat-number">{{ systemMetrics.cpu }}%</p>
+        <p class="stat-label">CPU Usage</p>
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-section">
+      <div class="chart-card">
+        <h3>User Growth</h3>
+        <div class="chart-container">
+          <canvas
+            baseChart
+            [data]="userGrowthChart.data"
+            [options]="userGrowthChart.options"
+            [type]="userGrowthChart.type"
+          >
+          </canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>Content Distribution</h3>
+        <div class="chart-container">
+          <canvas
+            baseChart
+            [data]="contentStatsChart.data"
+            [options]="contentStatsChart.options"
+            [type]="contentStatsChart.type"
+          >
+          </canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Queue -->
+    <div class="content-queue">
+      <h2>Content Moderation Queue</h2>
+      <div class="queue-list">
+        <div *ngFor="let item of contentQueue" class="queue-item">
+          <div class="item-info">
+            <h4>{{ item.title }}</h4>
+            <p>Type: {{ item.type }} | Submitted by: {{ item.submittedBy }}</p>
+            <small>{{ item.submittedAt | date : "medium" }}</small>
+          </div>
+          <div class="item-actions">
+            <button class="approve-btn" (click)="approveContent(item)">
+              Approve
+            </button>
+            <button class="reject-btn" (click)="rejectContent(item)">
+              Reject
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Management -->
+    <div class="user-management">
+      <h2>User Management</h2>
+      <div class="user-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Last Login</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of users">
+              <td>{{ user.name }}</td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.role }}</td>
+              <td>
+                <select
+                  [(ngModel)]="user.status"
+                  (change)="updateUserStatus(user, user.status)"
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                  <option value="suspended">Suspended</option>
+                </select>
+              </td>
+              <td>{{ user.lastLogin | date : "medium" }}</td>
+              <td>
+                <button class="edit-btn">Edit</button>
+                <button class="delete-btn">Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- System Health -->
+    <div class="system-health">
+      <h2>System Health</h2>
+      <div class="health-metrics">
+        <div class="metric">
+          <h4>CPU Usage</h4>
+          <div class="progress-bar">
+            <div class="progress" [style.width.%]="systemMetrics.cpu"></div>
+          </div>
+          <span>{{ systemMetrics.cpu }}%</span>
+        </div>
+        <div class="metric">
+          <h4>Memory Usage</h4>
+          <div class="progress-bar">
+            <div class="progress" [style.width.%]="systemMetrics.memory"></div>
+          </div>
+          <span>{{ systemMetrics.memory }}%</span>
+        </div>
+        <div class="metric">
+          <h4>Storage Usage</h4>
+          <div class="progress-bar">
+            <div class="progress" [style.width.%]="systemMetrics.storage"></div>
+          </div>
+          <span>{{ systemMetrics.storage }}%</span>
+        </div>
+        <div class="metric">
+          <h4>System Uptime</h4>
+          <p>{{ systemMetrics.uptime }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

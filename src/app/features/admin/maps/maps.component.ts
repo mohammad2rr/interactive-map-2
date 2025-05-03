@@ -1,125 +1,126 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
+interface Map {
+  id: number;
+  title: string;
+  description: string;
+  author: string;
+  status: 'published' | 'draft' | 'pending' | 'rejected';
+  type: 'public' | 'private' | 'shared';
+  views: number;
+  createdAt: Date;
+  lastModified: Date;
+  tags: string[];
+}
 
 @Component({
   selector: 'app-admin-maps',
   standalone: true,
-  imports: [CommonModule],
-  template: `
-    <div class="maps-container">
-      <h1>Map Management</h1>
-      <div class="maps-actions">
-        <button class="action-button">Create New Map</button>
-        <button class="action-button">Import Maps</button>
-        <button class="action-button">Export Maps</button>
-      </div>
-
-      <div class="maps-grid">
-        <div class="map-card" *ngFor="let i of [1, 2, 3, 4, 5, 6]">
-          <div class="map-preview"></div>
-          <div class="map-info">
-            <h3>Map {{ i }}</h3>
-            <p>Created: {{ today | date }}</p>
-            <div class="map-status">
-              <span class="status-badge" [class.published]="i % 2 === 0">
-                {{ i % 2 === 0 ? 'Published' : 'Draft' }}
-              </span>
-            </div>
-          </div>
-          <div class="map-actions">
-            <button class="icon-button">✏️</button>
-            <button class="icon-button">🗑️</button>
-            <button class="icon-button">👁️</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  `,
-  styles: [
-    `
-      .maps-container {
-        padding: 2rem;
-      }
-      .maps-actions {
-        display: flex;
-        gap: 1rem;
-        margin-bottom: 2rem;
-      }
-      .action-button {
-        background: #3498db;
-        color: white;
-        border: none;
-        padding: 0.75rem 1.5rem;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background 0.2s;
-      }
-      .action-button:hover {
-        background: #2980b9;
-      }
-      .maps-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 1.5rem;
-      }
-      .map-card {
-        background: white;
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
-      .map-preview {
-        height: 200px;
-        background: #f5f5f5;
-      }
-      .map-info {
-        padding: 1rem;
-      }
-      .map-info h3 {
-        margin: 0 0 0.5rem 0;
-        color: #2c3e50;
-      }
-      .map-info p {
-        margin: 0 0 0.5rem 0;
-        color: #666;
-        font-size: 0.9rem;
-      }
-      .map-status {
-        margin-top: 0.5rem;
-      }
-      .status-badge {
-        display: inline-block;
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-        font-size: 0.8rem;
-        background: #f5f5f5;
-        color: #666;
-      }
-      .status-badge.published {
-        background: #d4edda;
-        color: #155724;
-      }
-      .map-actions {
-        display: flex;
-        justify-content: flex-end;
-        padding: 1rem;
-        border-top: 1px solid #eee;
-      }
-      .icon-button {
-        background: none;
-        border: none;
-        font-size: 1.2rem;
-        cursor: pointer;
-        padding: 0.5rem;
-        border-radius: 4px;
-        transition: background 0.2s;
-      }
-      .icon-button:hover {
-        background: #f5f5f5;
-      }
-    `,
-  ],
+  imports: [CommonModule, FormsModule],
+  templateUrl: './maps.component.html',
+  styleUrls: ['./maps.component.scss'],
 })
 export class MapsComponent {
-  today = new Date();
+  maps: Map[] = [
+    {
+      id: 1,
+      title: 'World Population Density',
+      description:
+        'Interactive map showing population density across the world',
+      author: 'John Doe',
+      status: 'published',
+      type: 'public',
+      views: 1500,
+      createdAt: new Date(),
+      lastModified: new Date(),
+      tags: ['population', 'world', 'density'],
+    },
+    {
+      id: 2,
+      title: 'Climate Change Impact',
+      description: 'Map showing the effects of climate change over time',
+      author: 'Jane Smith',
+      status: 'pending',
+      type: 'public',
+      views: 0,
+      createdAt: new Date(),
+      lastModified: new Date(),
+      tags: ['climate', 'environment', 'change'],
+    },
+    {
+      id: 3,
+      title: 'Economic Growth Analysis',
+      description: 'Private map for economic research',
+      author: 'Bob Johnson',
+      status: 'draft',
+      type: 'private',
+      views: 0,
+      createdAt: new Date(),
+      lastModified: new Date(),
+      tags: ['economy', 'growth', 'analysis'],
+    },
+  ];
+
+  searchQuery = '';
+  selectedStatus: string | null = null;
+  selectedType: string | null = null;
+
+  get filteredMaps() {
+    return this.maps.filter((map) => {
+      const matchesSearch =
+        map.title.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        map.description
+          .toLowerCase()
+          .includes(this.searchQuery.toLowerCase()) ||
+        map.author.toLowerCase().includes(this.searchQuery.toLowerCase());
+      const matchesStatus =
+        !this.selectedStatus || map.status === this.selectedStatus;
+      const matchesType = !this.selectedType || map.type === this.selectedType;
+      return matchesSearch && matchesStatus && matchesType;
+    });
+  }
+
+  updateMapStatus(map: Map, status: Map['status']) {
+    map.status = status;
+  }
+
+  updateMapType(map: Map, type: Map['type']) {
+    map.type = type;
+  }
+
+  deleteMap(map: Map) {
+    if (confirm(`Are you sure you want to delete the map "${map.title}"?`)) {
+      this.maps = this.maps.filter((m) => m.id !== map.id);
+    }
+  }
+
+  getStatusColor(status: Map['status']): string {
+    switch (status) {
+      case 'published':
+        return '#2ecc71';
+      case 'draft':
+        return '#f1c40f';
+      case 'pending':
+        return '#3498db';
+      case 'rejected':
+        return '#e74c3c';
+      default:
+        return '#95a5a6';
+    }
+  }
+
+  getTypeColor(type: Map['type']): string {
+    switch (type) {
+      case 'public':
+        return '#2ecc71';
+      case 'private':
+        return '#e74c3c';
+      case 'shared':
+        return '#3498db';
+      default:
+        return '#95a5a6';
+    }
+  }
 }

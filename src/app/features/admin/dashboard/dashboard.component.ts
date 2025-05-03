@@ -1,117 +1,188 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { BaseChartDirective } from 'ng2-charts';
+import type { ChartConfiguration } from 'chart.js';
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  status: 'active' | 'inactive' | 'suspended';
+  lastLogin: Date;
+}
+
+interface ContentItem {
+  id: number;
+  title: string;
+  type: 'map' | 'template' | 'comment';
+  status: 'pending' | 'approved' | 'rejected';
+  submittedBy: string;
+  submittedAt: Date;
+}
+
+interface SystemMetric {
+  cpu: number;
+  memory: number;
+  storage: number;
+  uptime: string;
+}
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule],
-  template: `
-    <div class="admin-dashboard">
-      <h1>Admin Dashboard</h1>
-      <div class="dashboard-stats">
-        <div class="stat-card">
-          <h3>Total Users</h3>
-          <p class="stat-number">1,234</p>
-          <p class="stat-label">Active Users</p>
-        </div>
-        <div class="stat-card">
-          <h3>Total Maps</h3>
-          <p class="stat-number">567</p>
-          <p class="stat-label">Published Maps</p>
-        </div>
-        <div class="stat-card">
-          <h3>Content</h3>
-          <p class="stat-number">89</p>
-          <p class="stat-label">Pending Reviews</p>
-        </div>
-      </div>
-
-      <div class="dashboard-actions">
-        <div class="action-card">
-          <h2>Content Management</h2>
-          <ul>
-            <li>Manage Maps</li>
-            <li>Review Submissions</li>
-            <li>Update Categories</li>
-          </ul>
-        </div>
-        <div class="action-card">
-          <h2>User Management</h2>
-          <ul>
-            <li>View Users</li>
-            <li>Manage Permissions</li>
-            <li>User Reports</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  `,
-  styles: [
-    `
-      .admin-dashboard {
-        padding: 2rem;
-      }
-      .dashboard-stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1.5rem;
-        margin: 2rem 0;
-      }
-      .stat-card {
-        background: white;
-        border-radius: 8px;
-        padding: 1.5rem;
-        text-align: center;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
-      .stat-number {
-        font-size: 2rem;
-        font-weight: bold;
-        color: #2c3e50;
-        margin: 0.5rem 0;
-      }
-      .stat-label {
-        color: #666;
-        font-size: 0.9rem;
-      }
-      .dashboard-actions {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 1.5rem;
-        margin-top: 2rem;
-      }
-      .action-card {
-        background: white;
-        border-radius: 8px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
-      .action-card ul {
-        list-style: none;
-        padding: 0;
-        margin-top: 1rem;
-      }
-      .action-card li {
-        padding: 0.5rem 0;
-        border-bottom: 1px solid #eee;
-        cursor: pointer;
-      }
-      .action-card li:hover {
-        background: #f5f5f5;
-      }
-      h1 {
-        color: #333;
-        margin-bottom: 1rem;
-      }
-      h2 {
-        color: #2c3e50;
-        margin-bottom: 1rem;
-      }
-      h3 {
-        color: #666;
-        margin: 0;
-      }
-    `,
-  ],
+  imports: [CommonModule, FormsModule, BaseChartDirective],
+  templateUrl: './dashboard.component.html',
+  styleUrls: ['./dashboard.component.scss'],
 })
-export class DashboardComponent {}
+export class DashboardComponent {
+  // Sample data - replace with real data from your backend
+  users: User[] = [
+    {
+      id: 1,
+      name: 'John Doe',
+      email: 'john@example.com',
+      role: 'User',
+      status: 'active',
+      lastLogin: new Date(),
+    },
+    {
+      id: 2,
+      name: 'Jane Smith',
+      email: 'jane@example.com',
+      role: 'Admin',
+      status: 'active',
+      lastLogin: new Date(),
+    },
+    {
+      id: 3,
+      name: 'Bob Johnson',
+      email: 'bob@example.com',
+      role: 'User',
+      status: 'suspended',
+      lastLogin: new Date(),
+    },
+  ];
+
+  contentQueue: ContentItem[] = [
+    {
+      id: 1,
+      title: 'New Map Template',
+      type: 'template',
+      status: 'pending',
+      submittedBy: 'John Doe',
+      submittedAt: new Date(),
+    },
+    {
+      id: 2,
+      title: 'Interactive Map',
+      type: 'map',
+      status: 'pending',
+      submittedBy: 'Jane Smith',
+      submittedAt: new Date(),
+    },
+    {
+      id: 3,
+      title: 'User Comment',
+      type: 'comment',
+      status: 'pending',
+      submittedBy: 'Bob Johnson',
+      submittedAt: new Date(),
+    },
+  ];
+
+  systemMetrics: SystemMetric = {
+    cpu: 45,
+    memory: 60,
+    storage: 75,
+    uptime: '7 days, 12 hours',
+  };
+
+  // Chart configurations
+  userGrowthChart: ChartConfiguration<'line'> = {
+    type: 'line',
+    data: {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+      datasets: [
+        {
+          label: 'New Users',
+          data: [65, 59, 80, 81, 56, 55],
+          fill: false,
+          borderColor: 'rgb(75, 192, 192)',
+          tension: 0.1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+    },
+  };
+
+  contentStatsChart: ChartConfiguration<'doughnut'> = {
+    type: 'doughnut',
+    data: {
+      labels: ['Maps', 'Templates', 'Comments'],
+      datasets: [
+        {
+          data: [300, 50, 100],
+          backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+    },
+  };
+
+  // Quick actions
+  quickActions = [
+    { icon: 'add', label: 'Create User', action: () => this.createUser() },
+    {
+      icon: 'settings',
+      label: 'System Settings',
+      action: () => this.openSettings(),
+    },
+    {
+      icon: 'notifications',
+      label: 'Send Announcement',
+      action: () => this.sendAnnouncement(),
+    },
+    {
+      icon: 'backup',
+      label: 'Backup Database',
+      action: () => this.backupDatabase(),
+    },
+  ];
+
+  // Methods
+  createUser() {
+    // Implement create user logic
+  }
+
+  openSettings() {
+    // Implement settings logic
+  }
+
+  sendAnnouncement() {
+    // Implement announcement logic
+  }
+
+  backupDatabase() {
+    // Implement backup logic
+  }
+
+  approveContent(item: ContentItem) {
+    // Implement content approval logic
+  }
+
+  rejectContent(item: ContentItem) {
+    // Implement content rejection logic
+  }
+
+  updateUserStatus(user: User, status: User['status']) {
+    // Implement user status update logic
+  }
+}

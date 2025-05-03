@@ -1,0 +1,75 @@
+<div class="content-container">
+  <header class="content-header">
+    <h1>Content Management</h1>
+    <div class="header-actions">
+      <button class="action-button primary">Create New Content</button>
+      <button class="action-button">Manage Categories</button>
+      <button class="action-button">Review Submissions</button>
+    </div>
+  </header>
+
+  <div class="filters-section">
+    <div class="search-box">
+      <input
+        type="text"
+        [(ngModel)]="searchQuery"
+        placeholder="Search content..."
+      />
+    </div>
+    <div class="filter-controls">
+      <select [(ngModel)]="selectedType">
+        <option value="">All Types</option>
+        <option value="map">Maps</option>
+        <option value="template">Templates</option>
+        <option value="comment">Comments</option>
+      </select>
+      <select [(ngModel)]="selectedStatus">
+        <option value="">All Status</option>
+        <option value="published">Published</option>
+        <option value="draft">Draft</option>
+        <option value="pending">Pending</option>
+        <option value="rejected">Rejected</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="content-list">
+    <div class="content-item" *ngFor="let item of filteredContent">
+      <div class="content-info">
+        <div class="content-header">
+          <h3>{{ item.title }}</h3>
+          <span class="content-type">{{ item.type }}</span>
+        </div>
+        <div class="content-meta">
+          <p>Author: {{ item.author }}</p>
+          <p>Created: {{ item.createdAt | date : "medium" }}</p>
+          <p>Last Modified: {{ item.lastModified | date : "medium" }}</p>
+          <p>Views: {{ item.views }}</p>
+        </div>
+      </div>
+      <div class="content-status">
+        <select
+          [(ngModel)]="item.status"
+          (change)="updateContentStatus(item, item.status)"
+          [style.backgroundColor]="getStatusColor(item.status)"
+        >
+          <option value="published">Published</option>
+          <option value="draft">Draft</option>
+          <option value="pending">Pending</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+      <div class="content-actions">
+        <button class="icon-button edit" title="Edit Content">✏️</button>
+        <button
+          class="icon-button delete"
+          (click)="deleteContent(item)"
+          title="Delete Content"
+        >
+          🗑️
+        </button>
+        <button class="icon-button view" title="View Content">👁️</button>
+      </div>
+    </div>
+  </div>
+</div>
