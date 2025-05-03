@@ -45,7 +45,15 @@ export class ThemeService {
   }
 
   private setTheme(theme: string): void {
+    // Remove existing theme class
+    document.documentElement.classList.remove(this.DARK_THEME);
+    document.documentElement.classList.remove(this.LIGHT_THEME);
+
+    // Add new theme class
+    document.documentElement.classList.add(theme);
     document.documentElement.setAttribute('data-theme', theme);
+
+    // Update localStorage
     localStorage.setItem(this.THEME_KEY, theme);
   }
 }
