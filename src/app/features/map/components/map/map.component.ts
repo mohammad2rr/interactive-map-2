@@ -122,7 +122,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
     );
 
     // Navigate to the country route
-    this.router.navigate([countryData.code]);
+    this.router.navigate(['/map', countryData.code]);
   }
 
   private countryHovered(event: any, countryData: any): void {
