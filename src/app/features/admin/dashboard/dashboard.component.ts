@@ -1,8 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { BaseChartDirective } from 'ng2-charts';
-import type { ChartConfiguration } from 'chart.js';
 
 interface User {
   id: number;
@@ -32,7 +30,7 @@ interface SystemMetric {
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, BaseChartDirective],
+  imports: [CommonModule, FormsModule],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
 })
@@ -97,44 +95,6 @@ export class DashboardComponent {
     memory: 60,
     storage: 75,
     uptime: '7 days, 12 hours',
-  };
-
-  // Chart configurations
-  userGrowthChart: ChartConfiguration<'line'> = {
-    type: 'line',
-    data: {
-      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-      datasets: [
-        {
-          label: 'New Users',
-          data: [65, 59, 80, 81, 56, 55],
-          fill: false,
-          borderColor: 'rgb(75, 192, 192)',
-          tension: 0.1,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-    },
-  };
-
-  contentStatsChart: ChartConfiguration<'doughnut'> = {
-    type: 'doughnut',
-    data: {
-      labels: ['Maps', 'Templates', 'Comments'],
-      datasets: [
-        {
-          data: [300, 50, 100],
-          backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-    },
   };
 
   // Quick actions
