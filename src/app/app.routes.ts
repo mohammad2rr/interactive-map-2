@@ -81,6 +81,12 @@ export const routes: Routes = [
         component: IranMapComponent,
         title: 'Iran Map',
       },
+      // Public blog routes
+      {
+        path: 'blog',
+        loadChildren: () =>
+          import('./features/blog/blog.module').then((m) => m.BlogModule),
+      },
     ],
   },
 
@@ -164,6 +170,12 @@ export const routes: Routes = [
         component: BillingComponent,
         title: 'Billing',
       },
+      // User blog routes
+      {
+        path: 'blog',
+        loadChildren: () =>
+          import('./features/blog/blog.module').then((m) => m.BlogModule),
+      },
     ],
   },
 
@@ -217,6 +229,12 @@ export const routes: Routes = [
             (m) => m.SettingsComponent
           ),
         title: 'Admin Settings',
+      },
+      // Admin blog routes
+      {
+        path: 'blog',
+        loadChildren: () =>
+          import('./features/blog/blog.module').then((m) => m.BlogModule),
       },
     ],
   },
