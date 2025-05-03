@@ -1,0 +1,54 @@
+<div class="user-layout">
+  <header>
+    <nav class="header-nav">
+      <div class="logo">User Panel</div>
+      <div class="user-controls">
+        <button class="menu-toggle" (click)="toggleSidebar()">
+          <span class="hamburger"></span>
+        </button>
+        <span class="user-name">User Name</span>
+        <img
+          src="assets/images/user-avatar.png"
+          alt="User Avatar"
+          class="avatar"
+        />
+      </div>
+    </nav>
+  </header>
+  <div class="layout-content">
+    <aside class="user-sidebar" [class.active]="isSidebarOpen">
+      <nav class="sidebar-nav">
+        <a routerLink="/user/dashboard" routerLinkActive="active">
+          <i class="icon">📊</i> Dashboard
+        </a>
+        <a routerLink="/user/maps" routerLinkActive="active">
+          <i class="icon">🗺️</i> My Maps
+        </a>
+        <a routerLink="/user/activity" routerLinkActive="active">
+          <i class="icon">📝</i> Activity
+        </a>
+        <a routerLink="/user/favorites" routerLinkActive="active">
+          <i class="icon">⭐</i> Favorites
+        </a>
+        <a routerLink="/user/shared" routerLinkActive="active">
+          <i class="icon">👥</i> Shared Maps
+        </a>
+        <a routerLink="/user/templates" routerLinkActive="active">
+          <i class="icon">📋</i> Templates
+        </a>
+        <a routerLink="/user/settings" routerLinkActive="active">
+          <i class="icon">⚙️</i> Settings
+        </a>
+        <a routerLink="/user/profile" routerLinkActive="active">
+          <i class="icon">👤</i> Profile
+        </a>
+        <a routerLink="/user/billing" routerLinkActive="active">
+          <i class="icon">💳</i> Billing
+        </a>
+      </nav>
+    </aside>
+    <main>
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>
