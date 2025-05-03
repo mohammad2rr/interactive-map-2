@@ -71,7 +71,7 @@ import { RouterOutlet, RouterLink } from '@angular/router';
         min-height: 100vh;
       }
       .public-layout-main {
-        margin-top: 80px;
+        // padding-top: 60px;
       }
       main {
         flex: 1;

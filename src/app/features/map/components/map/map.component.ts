@@ -25,7 +25,7 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private destroy$ = new Subject<void>();
   private svg: any;
-  private margin = 50;
+  private margin = 0;
   private width = 0;
   private height = 0;
 
