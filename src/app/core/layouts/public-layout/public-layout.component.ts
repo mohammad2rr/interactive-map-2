@@ -71,7 +71,7 @@ import { RouterOutlet, RouterLink } from '@angular/router';
         min-height: 100vh;
       }
       .public-layout-main {
-        margin-top: 100px;
+        margin-top: 80px;
       }
       main {
         flex: 1;
@@ -79,7 +79,7 @@ import { RouterOutlet, RouterLink } from '@angular/router';
       nav {
         display: flex;
         gap: 1rem;
-        padding: 1rem;
+        padding: 0.25rem;
         background: #f5f5f5;
       }
       nav a {
