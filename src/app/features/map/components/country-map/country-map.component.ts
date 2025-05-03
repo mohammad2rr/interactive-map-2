@@ -132,6 +132,8 @@ export class CountryMapComponent implements OnInit, OnDestroy, AfterViewInit {
       .attr('fill', '#69b3a2')
       .attr('stroke', '#fff')
       .attr('stroke-width', 0.5)
+      .text((d: any) => d.properties.NAME_1)
+
       .style('cursor', 'pointer')
       .on('mouseover', (event: MouseEvent, d: ProvinceFeature) => {
         d3.select(event.target as any)

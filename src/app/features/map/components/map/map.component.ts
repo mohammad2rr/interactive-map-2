@@ -86,7 +86,8 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Create path generator
     const pathGenerator = d3.geoPath().projection(projection);
-
+    // Create a color scale
+    const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
     // Draw countries
     this.svg
       .selectAll('path')
@@ -110,8 +111,11 @@ export class MapComponent implements OnInit, OnDestroy, AfterViewInit {
       .attr('x', (d: any) => pathGenerator.centroid(d)[0])
       .attr('y', (d: any) => pathGenerator.centroid(d)[1])
       .attr('text-anchor', 'middle')
-      .attr('font-size', '10px')
-      .text((d: any) => d.properties.name);
+      .attr('font-size', '8px')
+      .attr('fill', '#333')
+      .attr('stroke', 'dodgerblue')
+      .attr('stroke-width', 0.25)
+      .text((d: any) => '');
   }
 
   private countryClicked(event: any, countryData: any): void {
