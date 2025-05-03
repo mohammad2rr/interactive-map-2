@@ -1,52 +1,39 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'app-user-layout',
-  standalone: true,
-  imports: [
-    CommonModule,
-    RouterLink,
-    RouterLinkActive,
-    RouterOutlet,
-    FormsModule,
-    RouterModule,
-  ],
   templateUrl: './user-layout.component.html',
   styleUrls: ['./user-layout.component.scss'],
+  standalone: true,
+  imports: [CommonModule, RouterModule],
 })
-export class UserLayoutComponent {
-  isCollapsed = false;
+export class UserLayoutComponent implements OnInit {
+  isSidebarOpen = true;
   showProfileMenu = false;
   searchQuery = '';
-  isSidebarOpen = false;
 
-  user = {
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    avatar: 'assets/images/default-avatar.png',
-    isOnline: true,
-  };
+  constructor(public themeService: ThemeService) {}
 
-  notifications = {
-    dashboard: 3,
-    maps: 5,
-    activity: 2,
-    shared: 1,
-  };
+  ngOnInit(): void {
+    this.themeService.initTheme();
+  }
 
-  toggleSidebar() {
+  toggleSidebar(): void {
     this.isSidebarOpen = !this.isSidebarOpen;
   }
 
-  toggleProfileMenu() {
+  toggleProfileMenu(): void {
     this.showProfileMenu = !this.showProfileMenu;
   }
 
-  logout() {
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
+  }
+
+  logout(): void {
     // Implement logout logic here
     console.log('Logout clicked');
   }

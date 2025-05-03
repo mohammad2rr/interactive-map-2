@@ -4,9 +4,38 @@
   min-height: 100vh;
   width: 100%;
   overflow-x: hidden;
-  background-color: #f8f9fa;
+  background-color: var(--bg-color);
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     sans-serif;
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+
+  // CSS Variables for theming
+  --bg-color: #f8f9fa;
+  --text-color: #2c3e50;
+  --header-bg: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+  --header-text: #fff;
+  --sidebar-bg: #fff;
+  --sidebar-text: #4a5568;
+  --sidebar-hover: #f7fafc;
+  --sidebar-active: #ebf8ff;
+  --main-bg: linear-gradient(135deg, #f8f9fa 0%, #f1f3f5 100%);
+  --border-color: rgba(0, 0, 0, 0.05);
+  --shadow-color: rgba(0, 0, 0, 0.1);
+
+  &[data-theme="dark"] {
+    --bg-color: #1a1f2e;
+    --text-color: #ecf0f1;
+    --header-bg: linear-gradient(135deg, #1a1f2e 0%, #2c3e50 100%);
+    --header-text: #fff;
+    --sidebar-bg: #2c3e50;
+    --sidebar-text: #ecf0f1;
+    --sidebar-hover: #34495e;
+    --sidebar-active: #3498db;
+    --main-bg: linear-gradient(135deg, #1a1f2e 0%, #2c3e50 100%);
+    --border-color: rgba(255, 255, 255, 0.05);
+    --shadow-color: rgba(0, 0, 0, 0.2);
+  }
 
   header {
     .header-nav {
@@ -14,24 +43,28 @@
       justify-content: space-between;
       align-items: center;
       padding: 1rem 2rem;
-      background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-      color: white;
+      background: var(--header-bg);
+      color: var(--header-text);
       position: sticky;
       top: 0;
       z-index: 100;
       width: 100%;
       box-sizing: border-box;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 20px var(--shadow-color);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
 
       .logo {
         font-size: 1.5rem;
         font-weight: 700;
-        background: linear-gradient(45deg, #fff, #e0e0e0);
+        background: linear-gradient(
+          45deg,
+          var(--header-text),
+          rgba(255, 255, 255, 0.8)
+        );
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        text-shadow: 0 2px 4px var(--shadow-color);
         letter-spacing: 0.5px;
         position: relative;
         padding-left: 2.5rem;
@@ -52,8 +85,32 @@
         align-items: center;
         gap: 1.5rem;
 
+        .theme-toggle {
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 0.5rem;
+          border-radius: 50%;
+          transition: all 0.3s ease;
+          color: var(--header-text);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 40px;
+          height: 40px;
+
+          &:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.1);
+          }
+
+          .icon {
+            font-size: 1.2rem;
+          }
+        }
+
         .admin-name {
-          color: #ecf0f1;
+          color: var(--header-text);
           font-weight: 500;
           display: none;
           position: relative;
@@ -76,12 +133,12 @@
           height: 40px;
           border-radius: 50%;
           border: 2px solid rgba(255, 255, 255, 0.3);
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 4px 8px var(--shadow-color);
           transition: all 0.3s ease;
 
           &:hover {
             transform: scale(1.05);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 6px 12px var(--shadow-color);
           }
         }
       }
@@ -97,7 +154,7 @@
 
     .admin-sidebar {
       width: 280px;
-      background: #fff;
+      background: var(--sidebar-bg);
       padding: 2rem 0;
       position: fixed;
       left: 0;
@@ -108,8 +165,8 @@
       margin-top: 4rem;
       box-sizing: border-box;
       overflow-y: auto;
-      box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05);
-      border-right: 1px solid rgba(0, 0, 0, 0.05);
+      box-shadow: 4px 0 20px var(--shadow-color);
+      border-right: 1px solid var(--border-color);
 
       .sidebar-nav {
         display: flex;
@@ -123,7 +180,7 @@
           align-items: center;
           gap: 0.75rem;
           padding: 1rem 1.5rem;
-          color: #4a5568;
+          color: var(--sidebar-text);
           text-decoration: none;
           border-radius: 12px;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -149,7 +206,7 @@
           }
 
           &:hover {
-            background-color: #f7fafc;
+            background-color: var(--sidebar-hover);
             transform: translateX(8px);
             box-shadow: 0 4px 12px rgba(52, 152, 219, 0.1);
 
@@ -163,7 +220,11 @@
           }
 
           &.active {
-            background: linear-gradient(135deg, #ebf8ff 0%, #e3f2fd 100%);
+            background: linear-gradient(
+              135deg,
+              var(--sidebar-active) 0%,
+              #e3f2fd 100%
+            );
             color: #3498db;
             box-shadow: 0 4px 12px rgba(52, 152, 219, 0.15);
 
@@ -193,8 +254,8 @@
       width: calc(100% - 280px);
       box-sizing: border-box;
       overflow-x: hidden;
-      background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f5 100%);
-      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.02);
+      background: var(--main-bg);
+      box-shadow: inset 0 0 20px var(--shadow-color);
     }
   }
 }

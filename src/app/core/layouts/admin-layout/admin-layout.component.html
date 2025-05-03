@@ -3,12 +3,21 @@
     <nav class="header-nav">
       <div class="logo">Admin Panel</div>
       <div class="admin-controls">
+        <button
+          class="theme-toggle"
+          (click)="toggleTheme()"
+          [class.active]="themeService.isDarkMode()"
+        >
+          <span class="icon">{{
+            themeService.isDarkMode() ? "🌙" : "☀️"
+          }}</span>
+        </button>
         <button class="menu-toggle" (click)="toggleSidebar()">
           <span class="hamburger"></span>
         </button>
-        <span class="admin-name">Admin User</span>
+        <span class="admin-name">Admin</span>
         <img
-          src="assets/images/admin-avatar.png"
+          src="assets/images/admin-avatar.jpg"
           alt="Admin Avatar"
           class="avatar"
         />
@@ -16,22 +25,27 @@
     </nav>
   </header>
   <div class="layout-content">
-    <aside class="admin-sidebar" [class.active]="isSidebarOpen">
+    <aside class="admin-sidebar" [class.collapsed]="!isSidebarOpen">
       <nav class="sidebar-nav">
         <a routerLink="/admin/dashboard" routerLinkActive="active">
-          <i class="icon">📊</i> Dashboard
-        </a>
-        <a routerLink="/admin/content" routerLinkActive="active">
-          <i class="icon">📝</i> Content Management
+          <i class="icon">📊</i>
+          <span>Dashboard</span>
         </a>
         <a routerLink="/admin/users" routerLinkActive="active">
-          <i class="icon">👥</i> User Management
+          <i class="icon">👥</i>
+          <span>Users</span>
+        </a>
+        <a routerLink="/admin/content" routerLinkActive="active">
+          <i class="icon">📝</i>
+          <span>Content</span>
         </a>
         <a routerLink="/admin/maps" routerLinkActive="active">
-          <i class="icon">🗺️</i> Map Management
+          <i class="icon">🗺️</i>
+          <span>Maps</span>
         </a>
         <a routerLink="/admin/settings" routerLinkActive="active">
-          <i class="icon">⚙️</i> Settings
+          <i class="icon">⚙️</i>
+          <span>Settings</span>
         </a>
       </nav>
     </aside>
