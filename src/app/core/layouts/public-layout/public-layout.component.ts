@@ -33,7 +33,7 @@ import { RouterOutlet, RouterLink } from '@angular/router';
           <a routerLink="/iran-map" routerLinkActive="active">Iran Map</a>
         </nav>
       </header> -->
-      <main>
+      <main class="public-layout-main">
         <router-outlet></router-outlet>
       </main>
 
@@ -74,6 +74,9 @@ import { RouterOutlet, RouterLink } from '@angular/router';
         display: flex;
         flex-direction: column;
         min-height: 100vh;
+      }
+      .public-layout-main {
+        margin-top: 100px;
       }
       main {
         flex: 1;
