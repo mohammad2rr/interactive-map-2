@@ -1,0 +1,345 @@
+.billing-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.billing-header {
+  margin-bottom: 2rem;
+}
+
+.billing-header h1 {
+  color: #2c3e50;
+  margin: 0 0 0.5rem 0;
+  font-size: 2rem;
+}
+
+.billing-header p {
+  color: #666;
+  margin: 0;
+}
+
+.billing-section {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.billing-section h2 {
+  color: #2c3e50;
+  margin: 0 0 1rem 0;
+  font-size: 1.5rem;
+}
+
+.current-plan {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.plan-info h3 {
+  margin: 0 0 0.5rem 0;
+  color: #2c3e50;
+}
+
+.price {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #3498db;
+  margin: 0 0 0.5rem 0;
+}
+
+.next-billing {
+  color: #666;
+  margin: 0;
+}
+
+.plan-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.upgrade-btn,
+.cancel-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.upgrade-btn {
+  background: #3498db;
+  color: white;
+}
+
+.upgrade-btn:hover {
+  background: #2980b9;
+}
+
+.cancel-btn {
+  background: #f5f5f5;
+  color: #2c3e50;
+}
+
+.cancel-btn:hover {
+  background: #e0e0e0;
+}
+
+.payment-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.payment-method {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.method-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.method-icon {
+  font-size: 1.5rem;
+}
+
+.method-details p {
+  margin: 0;
+}
+
+.method-type {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.method-number,
+.method-expiry {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.method-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.default-btn,
+.remove-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.default-btn {
+  background: #f5f5f5;
+  color: #2c3e50;
+}
+
+.default-btn.active {
+  background: #2ecc71;
+  color: white;
+}
+
+.remove-btn {
+  background: #e74c3c;
+  color: white;
+}
+
+.add-method-btn {
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.add-method-btn:hover {
+  background: #2980b9;
+}
+
+.billing-history {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.invoice {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.invoice-info {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+.invoice-date,
+.invoice-amount {
+  color: #2c3e50;
+  margin: 0;
+}
+
+.invoice-status {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.invoice-status.paid {
+  background: #2ecc71;
+  color: white;
+}
+
+.invoice-status.pending {
+  background: #f1c40f;
+  color: white;
+}
+
+.invoice-status.failed {
+  background: #e74c3c;
+  color: white;
+}
+
+.download-btn {
+  padding: 0.5rem 1rem;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.download-btn:hover {
+  background: #2980b9;
+}
+
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.plan-card {
+  padding: 1.5rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.plan-card.popular {
+  border: 2px solid #3498db;
+  position: relative;
+}
+
+.plan-card.popular::before {
+  content: "Most Popular";
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #3498db;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.plan-header {
+  text-align: center;
+}
+
+.plan-header h3 {
+  margin: 0 0 0.5rem 0;
+  color: #2c3e50;
+}
+
+.plan-price {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #3498db;
+  margin: 0;
+}
+
+.plan-features {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex-grow: 1;
+}
+
+.plan-features li {
+  padding: 0.5rem 0;
+  color: #666;
+  border-bottom: 1px solid #eee;
+}
+
+.plan-features li:last-child {
+  border-bottom: none;
+}
+
+.select-plan-btn {
+  padding: 0.75rem;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.select-plan-btn:hover {
+  background: #2980b9;
+}
+
+@media (max-width: 768px) {
+  .billing-container {
+    padding: 1rem;
+  }
+
+  .current-plan,
+  .payment-method,
+  .invoice {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .plan-actions,
+  .method-actions,
+  .invoice-info {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .plans-grid {
+    grid-template-columns: 1fr;
+  }
+}

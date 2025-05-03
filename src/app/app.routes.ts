@@ -8,6 +8,7 @@ import { UserLayoutComponent } from './core/layouts/user-layout/user-layout.comp
 import { AdminLayoutComponent } from './core/layouts/admin-layout/admin-layout.component';
 import { authGuard } from './core/guards/auth.guard';
 import { adminGuard } from './core/guards/admin.guard';
+import { BillingComponent } from './features/user/billing/billing.component';
 
 export const routes: Routes = [
   // Main landing page with public layout (header and footer)
@@ -100,7 +101,7 @@ export const routes: Routes = [
           import('./features/user/dashboard/dashboard.component').then(
             (m) => m.DashboardComponent
           ),
-        title: 'User Dashboard',
+        title: 'Dashboard',
       },
       {
         path: 'maps',
@@ -119,6 +120,30 @@ export const routes: Routes = [
         title: 'Activity',
       },
       {
+        path: 'favorites',
+        loadComponent: () =>
+          import('./features/user/favorites/favorites.component').then(
+            (m) => m.FavoritesComponent
+          ),
+        title: 'Favorites',
+      },
+      {
+        path: 'shared',
+        loadComponent: () =>
+          import('./features/user/shared/shared.component').then(
+            (m) => m.SharedComponent
+          ),
+        title: 'Shared Maps',
+      },
+      {
+        path: 'templates',
+        loadComponent: () =>
+          import('./features/user/templates/templates.component').then(
+            (m) => m.TemplatesComponent
+          ),
+        title: 'Templates',
+      },
+      {
         path: 'settings',
         loadComponent: () =>
           import('./features/user/settings/settings.component').then(
@@ -126,14 +151,27 @@ export const routes: Routes = [
           ),
         title: 'Settings',
       },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/user/profile/profile.component').then(
+            (m) => m.ProfileComponent
+          ),
+        title: 'Profile',
+      },
+      {
+        path: 'billing',
+        component: BillingComponent,
+        title: 'Billing',
+      },
     ],
   },
 
-  // Admin routes with admin layout (protected by both auth and admin guards)
+  // Admin routes with admin layout (protected by admin guard)
   {
     path: 'admin',
     component: AdminLayoutComponent,
-    // canActivate: [authGuard, adminGuard],
+    // canActivate: [authGuard,adminGuard],
     children: [
       {
         path: '',
@@ -147,38 +185,6 @@ export const routes: Routes = [
             (m) => m.DashboardComponent
           ),
         title: 'Admin Dashboard',
-      },
-      {
-        path: 'content',
-        loadComponent: () =>
-          import('./features/admin/content/content.component').then(
-            (m) => m.ContentComponent
-          ),
-        title: 'Content Management',
-      },
-      {
-        path: 'users',
-        loadComponent: () =>
-          import('./features/admin/users/users.component').then(
-            (m) => m.UsersComponent
-          ),
-        title: 'User Management',
-      },
-      {
-        path: 'maps',
-        loadComponent: () =>
-          import('./features/admin/maps/maps.component').then(
-            (m) => m.MapsComponent
-          ),
-        title: 'Map Management',
-      },
-      {
-        path: 'settings',
-        loadComponent: () =>
-          import('./features/admin/settings/settings.component').then(
-            (m) => m.SettingsComponent
-          ),
-        title: 'Admin Settings',
       },
     ],
   },

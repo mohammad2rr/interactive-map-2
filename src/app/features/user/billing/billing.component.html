@@ -1,0 +1,114 @@
+<div class="billing-container">
+  <div class="billing-header">
+    <h1>Billing & Subscription</h1>
+    <p>Manage your subscription and payment methods</p>
+  </div>
+
+  <div class="billing-content">
+    <!-- Current Plan Section -->
+    <div class="billing-section">
+      <h2>Current Plan</h2>
+      <div class="current-plan">
+        <div class="plan-info">
+          <h3>{{ currentPlan.name }}</h3>
+          <p class="price">${{ currentPlan.price }}/month</p>
+          <p class="next-billing">Next billing date: {{ nextBillingDate }}</p>
+        </div>
+        <div class="plan-actions">
+          <button class="upgrade-btn" (click)="showPlans()">
+            Upgrade Plan
+          </button>
+          <button class="cancel-btn" (click)="cancelSubscription()">
+            Cancel Subscription
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment Methods Section -->
+    <div class="billing-section">
+      <h2>Payment Methods</h2>
+      <div class="payment-methods">
+        <div class="payment-method" *ngFor="let method of paymentMethods">
+          <div class="method-info">
+            <div class="method-icon">
+              {{ method.type === "card" ? "💳" : "🅿️" }}
+            </div>
+            <div class="method-details">
+              <p class="method-type">
+                {{ method.type === "card" ? "Credit Card" : "PayPal" }}
+              </p>
+              <p class="method-number">
+                {{
+                  method.type === "card" ? "•••• " + method.last4 : method.last4
+                }}
+              </p>
+              <p class="method-expiry" *ngIf="method.type === 'card'">
+                Expires {{ method.expiry }}
+              </p>
+            </div>
+          </div>
+          <div class="method-actions">
+            <button
+              class="default-btn"
+              [class.active]="method.isDefault"
+              (click)="setDefaultMethod(method.id)"
+            >
+              {{ method.isDefault ? "Default" : "Set as Default" }}
+            </button>
+            <button class="remove-btn" (click)="removePaymentMethod(method.id)">
+              Remove
+            </button>
+          </div>
+        </div>
+      </div>
+      <button class="add-method-btn" (click)="addPaymentMethod()">
+        Add Payment Method
+      </button>
+    </div>
+
+    <!-- Billing History Section -->
+    <div class="billing-section">
+      <h2>Billing History</h2>
+      <div class="billing-history">
+        <div class="invoice" *ngFor="let invoice of invoices">
+          <div class="invoice-info">
+            <p class="invoice-date">{{ invoice.date }}</p>
+            <p class="invoice-amount">${{ invoice.amount }}</p>
+            <p class="invoice-status" [class]="invoice.status">
+              {{ invoice.status }}
+            </p>
+          </div>
+          <div class="invoice-actions">
+            <button class="download-btn" (click)="downloadInvoice(invoice.id)">
+              Download
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Available Plans Section -->
+    <div class="billing-section" *ngIf="showAvailablePlans">
+      <h2>Available Plans</h2>
+      <div class="plans-grid">
+        <div
+          class="plan-card"
+          *ngFor="let plan of availablePlans"
+          [class.popular]="plan.isPopular"
+        >
+          <div class="plan-header">
+            <h3>{{ plan.name }}</h3>
+            <p class="plan-price">${{ plan.price }}/month</p>
+          </div>
+          <ul class="plan-features">
+            <li *ngFor="let feature of plan.features">{{ feature }}</li>
+          </ul>
+          <button class="select-plan-btn" (click)="selectPlan(plan.id)">
+            {{ plan.isPopular ? "Select Popular Plan" : "Select Plan" }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
