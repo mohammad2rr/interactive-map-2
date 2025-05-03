@@ -17,7 +17,9 @@ import { RouterOutlet, RouterLink } from '@angular/router';
             <a routerLink="/blog" routerLinkActive="active">Blog</a>
             <a routerLink="/map" routerLinkActive="active">Map</a>
             <a routerLink="/about" routerLinkActive="active">About</a>
-            <a routerLink="/contact" routerLinkActive="active">Contact</a>
+            <!-- <a routerLink="/contact" routerLinkActive="active">Contact</a> -->
+            <a routerLink="/admin/dashboard" routerLinkActive="active">Admin</a>
+            <a routerLink="/user/dashboard" routerLinkActive="active">User</a>
           </nav>
           <div class="auth-buttons">
             <a routerLink="/login" class="btn btn-outline">Login</a>
