@@ -7,11 +7,11 @@ import { routes } from './app.routes';
 import { reducers } from './store';
 import { MapEffects } from './store/map/map.effects';
 import { provideStoreDevtools } from '@ngrx/store-devtools';
-import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import { provideAnimations } from '@angular/platform-browser/animations';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideAnimationsAsync(),
+    provideAnimations(),
     provideRouter(routes),
     provideHttpClient(),
     provideStore(reducers),

@@ -18,9 +18,10 @@ import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-province-map',
+  standalone: true,
+  imports: [CommonModule],
   templateUrl: './province-map.component.html',
   styleUrls: ['./province-map.component.scss'],
-  imports: [CommonModule],
 })
 export class ProvinceMapComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('mapContainer') mapContainer!: ElementRef;

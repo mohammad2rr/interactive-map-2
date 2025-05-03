@@ -27,9 +27,10 @@ interface ProvinceFeature extends d3.ExtendedFeature {
 
 @Component({
   selector: 'app-country-map',
+  standalone: true,
+  imports: [CommonModule],
   templateUrl: './country-map.component.html',
   styleUrls: ['./country-map.component.scss'],
-  imports: [CommonModule],
 })
 export class CountryMapComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('mapContainer') mapContainer!: ElementRef;
