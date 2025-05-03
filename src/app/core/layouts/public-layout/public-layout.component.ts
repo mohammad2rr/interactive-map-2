@@ -13,6 +13,8 @@ import { RouterOutlet, RouterLink } from '@angular/router';
             <a routerLink="/">Interactive Map</a>
           </div>
           <nav class="main-nav">
+            <a routerLink="/" routerLinkActive="active">Main-Page</a>
+            <a routerLink="/blog" routerLinkActive="active">Blog</a>
             <a routerLink="/map" routerLinkActive="active">Map</a>
             <a routerLink="/about" routerLinkActive="active">About</a>
             <a routerLink="/contact" routerLinkActive="active">Contact</a>
@@ -23,16 +25,7 @@ import { RouterOutlet, RouterLink } from '@angular/router';
           </div>
         </div>
       </header>
-      <!-- <header>
-        <nav>
-          <a routerLink="/" routerLinkActive="active">Home</a>
-          <a routerLink="/about" routerLinkActive="active">About</a>
-          <a routerLink="/contact" routerLinkActive="active">Contact</a>
-          <a routerLink="/blog" routerLinkActive="active">Blog</a>
-          <a routerLink="/map" routerLinkActive="active">Map</a>
-          <a routerLink="/iran-map" routerLinkActive="active">Iran Map</a>
-        </nav>
-      </header> -->
+
       <main class="public-layout-main">
         <router-outlet></router-outlet>
       </main>
