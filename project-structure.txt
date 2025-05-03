@@ -1,0 +1,212 @@
++---public
+|       favicon.ico
+|       
+\---src
+    |   index.html
+    |   main.ts
+    |   styles.scss
+    |   
+    +---app
+    |   |   app.component.html
+    |   |   app.component.scss
+    |   |   app.component.spec.ts
+    |   |   app.component.ts
+    |   |   app.config.ts
+    |   |   app.module.ts
+    |   |   app.routes.ts
+    |   |   
+    |   +---core
+    |   |   |   core.module.ts
+    |   |   |   
+    |   |   +---guards
+    |   |   |       admin.guard.ts
+    |   |   |       auth.guard.ts
+    |   |   |       
+    |   |   +---layouts
+    |   |   |   +---admin-layout
+    |   |   |   |       admin-layout.component.html
+    |   |   |   |       admin-layout.component.scss
+    |   |   |   |       admin-layout.component.ts
+    |   |   |   |       
+    |   |   |   +---public-layout
+    |   |   |   |       public-layout.component.ts
+    |   |   |   |       
+    |   |   |   \---user-layout
+    |   |   |           user-layout.component.html
+    |   |   |           user-layout.component.scss
+    |   |   |           user-layout.component.ts
+    |   |   |           
+    |   |   \---services
+    |   |           auth.service.ts
+    |   |           map.service.ts
+    |   |           theme.service.ts
+    |   |           
+    |   +---features
+    |   |   +---admin
+    |   |   |   +---content
+    |   |   |   |       content.component.html
+    |   |   |   |       content.component.scss
+    |   |   |   |       content.component.ts
+    |   |   |   |       
+    |   |   |   +---dashboard
+    |   |   |   |       dashboard.component.html
+    |   |   |   |       dashboard.component.scss
+    |   |   |   |       dashboard.component.ts
+    |   |   |   |       
+    |   |   |   +---maps
+    |   |   |   |       maps.component.html
+    |   |   |   |       maps.component.scss
+    |   |   |   |       maps.component.ts
+    |   |   |   |       
+    |   |   |   +---settings
+    |   |   |   |       settings.component.ts
+    |   |   |   |       
+    |   |   |   \---users
+    |   |   |           users.component.html
+    |   |   |           users.component.scss
+    |   |   |           users.component.ts
+    |   |   |           
+    |   |   +---auth
+    |   |   |   +---login
+    |   |   |   |       login.component.ts
+    |   |   |   |       
+    |   |   |   \---register
+    |   |   |           register.component.ts
+    |   |   |           
+    |   |   +---blog
+    |   |   |   |   blog.module.ts
+    |   |   |   |   
+    |   |   |   +---components
+    |   |   |   |   +---blog-approval
+    |   |   |   |   |       blog-approval.component.ts
+    |   |   |   |   |       
+    |   |   |   |   +---blog-create
+    |   |   |   |   |       blog-create.component.ts
+    |   |   |   |   |       
+    |   |   |   |   +---blog-detail
+    |   |   |   |   |       blog-detail.component.ts
+    |   |   |   |   |       
+    |   |   |   |   +---blog-form
+    |   |   |   |   +---blog-list
+    |   |   |   |   |       blog-list.component.ts
+    |   |   |   |   |       
+    |   |   |   |   \---blog-review
+    |   |   |   +---models
+    |   |   |   |       blog.model.ts
+    |   |   |   |       
+    |   |   |   \---services
+    |   |   |           blog.service.ts
+    |   |   |           
+    |   |   +---home
+    |   |   |       home.component.html
+    |   |   |       home.component.scss
+    |   |   |       home.component.ts
+    |   |   |       
+    |   |   +---iran-map
+    |   |   |       iran-map.component.css
+    |   |   |       iran-map.component.html
+    |   |   |       iran-map.component.ts
+    |   |   |       
+    |   |   +---map
+    |   |   |   |   map.module.ts
+    |   |   |   |   
+    |   |   |   +---components
+    |   |   |   |   +---country-map
+    |   |   |   |   |       country-map.component.html
+    |   |   |   |   |       country-map.component.scss
+    |   |   |   |   |       country-map.component.ts
+    |   |   |   |   |       
+    |   |   |   |   +---map
+    |   |   |   |   |       map.component.html
+    |   |   |   |   |       map.component.scss
+    |   |   |   |   |       map.component.ts
+    |   |   |   |   |       
+    |   |   |   |   \---province-map
+    |   |   |   |           province-map.component.html
+    |   |   |   |           province-map.component.scss
+    |   |   |   |           province-map.component.ts
+    |   |   |   |           
+    |   |   |   \---services
+    |   |   |           map.service.ts
+    |   |   |           
+    |   |   +---public
+    |   |   |   +---about
+    |   |   |   |       about.component.ts
+    |   |   |   |       
+    |   |   |   +---contact
+    |   |   |   |       contact.component.ts
+    |   |   |   |       
+    |   |   |   \---landing
+    |   |   |           landing.component.ts
+    |   |   |           
+    |   |   \---user
+    |   |       +---activity
+    |   |       |       activity.component.ts
+    |   |       |       
+    |   |       +---billing
+    |   |       |       billing.component.html
+    |   |       |       billing.component.scss
+    |   |       |       billing.component.ts
+    |   |       |       
+    |   |       +---dashboard
+    |   |       |       dashboard.component.scss
+    |   |       |       dashboard.component.ts
+    |   |       |       
+    |   |       +---favorites
+    |   |       |       favorites.component.ts
+    |   |       |       
+    |   |       +---maps
+    |   |       |       maps.component.ts
+    |   |       |       
+    |   |       +---profile
+    |   |       |       profile.component.scss
+    |   |       |       profile.component.ts
+    |   |       |       
+    |   |       +---settings
+    |   |       |       settings.component.ts
+    |   |       |       
+    |   |       +---shared
+    |   |       |       shared.component.ts
+    |   |       |       
+    |   |       \---templates
+    |   |               templates.component.ts
+    |   |               
+    |   +---shared
+    |   |       shared.module.ts
+    |   |       
+    |   \---store
+    |       |   index.ts
+    |       |   
+    |       +---map
+    |       |       map.actions.ts
+    |       |       map.effects.ts
+    |       |       map.reducer.ts
+    |       |       map.selectors.ts
+    |       |       
+    |       \---models
+    |               map.models.ts
+    |               
+    +---assets
+    |   \---maps
+    |       |   world-110m.json
+    |       |   
+    |       +---BRA
+    |       +---CAN
+    |       +---CHN
+    |       +---DEU
+    |       +---FRA
+    |       +---GBR
+    |       +---IND
+    |       +---iran-map
+    |       |       iran-map.json
+    |       |       
+    |       +---IRN
+    |       |       provinces.json
+    |       |       
+    |       +---JPN
+    |       +---RUS
+    |       \---USA
+    +---environments
+    |       environment.ts
+    |       
+    \---styles
