@@ -1,5 +1,5 @@
 <div
-  class="d-flex flex-column min-vh-100 overflow-hidden"
+  class="d-flex flex-column min-vh-100 overflow-hidden fade-in"
   [class.bg-dark]="themeService.isDarkMode()"
   [class.text-light]="themeService.isDarkMode()"
 >
@@ -15,7 +15,7 @@
           href="#"
         >
           <span class="fs-4 text-gradient">📊</span>
-          <span>Admin Panel</span>
+          <span class="text-gradient">Admin Panel</span>
         </a>
         <div class="d-flex align-items-center gap-3">
           <button
@@ -24,17 +24,17 @@
             [class.btn-outline-light]="themeService.isDarkMode()"
             (click)="toggleTheme()"
           >
-            <span class="fs-5">{{
+            <span class="icon">{{
               themeService.isDarkMode() ? "🌙" : "☀️"
             }}</span>
           </button>
           <button
-            class="navbar-toggler border-0"
+            class="modern-button outline"
             type="button"
             (click)="toggleSidebar()"
             [attr.aria-expanded]="isSidebarOpen"
           >
-            <span class="navbar-toggler-icon"></span>
+            <span class="icon">☰</span>
           </button>
           <div class="d-none d-md-flex align-items-center gap-2">
             <span class="fw-medium">Admin</span>
@@ -72,7 +72,7 @@
           [class.text-light]="themeService.isDarkMode()"
           [class.text-dark]="!themeService.isDarkMode()"
         >
-          <span class="fs-5">📊</span>
+          <span class="icon">📊</span>
           <span class="d-none d-md-inline">Dashboard</span>
         </a>
         <a
@@ -82,7 +82,7 @@
           [class.text-light]="themeService.isDarkMode()"
           [class.text-dark]="!themeService.isDarkMode()"
         >
-          <span class="fs-5">👥</span>
+          <span class="icon">👥</span>
           <span class="d-none d-md-inline">Users</span>
         </a>
         <a
@@ -92,7 +92,7 @@
           [class.text-light]="themeService.isDarkMode()"
           [class.text-dark]="!themeService.isDarkMode()"
         >
-          <span class="fs-5">📝</span>
+          <span class="icon">📝</span>
           <span class="d-none d-md-inline">Content</span>
         </a>
         <a
@@ -102,7 +102,7 @@
           [class.text-light]="themeService.isDarkMode()"
           [class.text-dark]="!themeService.isDarkMode()"
         >
-          <span class="fs-5">🗺️</span>
+          <span class="icon">🗺️</span>
           <span class="d-none d-md-inline">Maps</span>
         </a>
         <a
@@ -112,7 +112,7 @@
           [class.text-light]="themeService.isDarkMode()"
           [class.text-dark]="!themeService.isDarkMode()"
         >
-          <span class="fs-5">⚙️</span>
+          <span class="icon">⚙️</span>
           <span class="d-none d-md-inline">Settings</span>
         </a>
         <a
@@ -122,14 +122,14 @@
           [class.text-light]="themeService.isDarkMode()"
           [class.text-dark]="!themeService.isDarkMode()"
         >
-          <span class="fs-5">📚</span>
+          <span class="icon">📚</span>
           <span class="d-none d-md-inline">Blog</span>
         </a>
       </nav>
     </aside>
 
     <main
-      class="flex-grow-1 p-4"
+      class="flex-grow-1 p-4 fade-in"
       [style.margin-left]="!isMobile && isSidebarOpen ? '250px' : '0'"
       style="transition: margin-left 0.3s ease"
     >
@@ -140,8 +140,13 @@
 
 <!-- Overlay for mobile -->
 <div
-  class="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50"
+  class="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 fade-in"
   *ngIf="isSidebarOpen && isMobile"
   (click)="toggleSidebar()"
-  style="z-index: 1030; display: block"
+  style="
+    z-index: 1030;
+    display: block;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  "
 ></div>
