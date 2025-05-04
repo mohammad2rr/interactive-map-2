@@ -1,5 +1,14 @@
-<div class="map-container" #mapContainer>
-  <div class="map-title" *ngIf="selectedProvince$ | async as province">
-    <h1>{{ province.name }}</h1>
+<div class="container-fluid p-0">
+  <div class="row">
+    <div class="col-12">
+      <div class="map-container position-relative" #mapContainer>
+        <div
+          class="map-title position-absolute top-0 start-0 p-3 bg-white bg-opacity-75 rounded-bottom-end shadow-sm"
+          *ngIf="selectedProvince$ | async as province"
+        >
+          <h1 class="h3 mb-0">{{ province.name }}</h1>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

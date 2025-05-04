@@ -1,72 +1,182 @@
-<div class="user-layout">
-  <header>
-    <nav class="header-nav">
-      <div class="logo">Interactive Map</div>
-      <div class="user-controls">
-        <button
-          class="theme-toggle"
-          (click)="toggleTheme()"
-          [class.active]="themeService.isDarkMode()"
-        >
-          <span class="icon">{{
-            themeService.isDarkMode() ? "🌙" : "☀️"
-          }}</span>
-        </button>
-        <button class="menu-toggle" (click)="toggleSidebar()">
-          <span class="hamburger"></span>
-        </button>
-        <span class="user-name">John Doe</span>
-        <img src="assets/images/avatar.jpg" alt="User Avatar" class="avatar" />
+<div
+  class="d-flex flex-column min-vh-100"
+  [class.bg-dark]="themeService.isDarkMode()"
+  [class.text-light]="themeService.isDarkMode()"
+>
+  <header
+    class="bg-white shadow-sm"
+    [class.bg-dark]="themeService.isDarkMode()"
+    [class.border-bottom]="!themeService.isDarkMode()"
+    [class.border-secondary]="themeService.isDarkMode()"
+  >
+    <nav
+      class="navbar navbar-expand-lg"
+      [class.navbar-light]="!themeService.isDarkMode()"
+      [class.navbar-dark]="themeService.isDarkMode()"
+    >
+      <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="#">Interactive Map</a>
+        <div class="d-flex align-items-center gap-3">
+          <button
+            class="btn"
+            [class.btn-outline-secondary]="!themeService.isDarkMode()"
+            [class.btn-outline-light]="themeService.isDarkMode()"
+            (click)="toggleTheme()"
+          >
+            <span>{{ themeService.isDarkMode() ? "🌙" : "☀️" }}</span>
+          </button>
+          <button
+            class="navbar-toggler"
+            type="button"
+            (click)="toggleSidebar()"
+            [attr.aria-expanded]="isSidebarOpen"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <span class="d-none d-md-inline">John Doe</span>
+          <img
+            src="assets/images/avatar.jpg"
+            alt="User Avatar"
+            class="rounded-circle"
+            style="width: 40px; height: 40px; object-fit: cover"
+          />
+        </div>
       </div>
     </nav>
   </header>
-  <div class="layout-content">
-    <aside class="user-sidebar" [class.collapsed]="!isSidebarOpen">
-      <nav class="sidebar-nav">
-        <a routerLink="/user/dashboard" routerLinkActive="active">
-          <i class="icon">📊</i>
-          <span>Dashboard</span>
+
+  <div class="d-flex flex-grow-1 position-relative">
+    <aside
+      class="bg-light border-end position-fixed h-100"
+      [class.bg-dark]="themeService.isDarkMode()"
+      [class.border-secondary]="themeService.isDarkMode()"
+      [style.transform]="!isSidebarOpen ? 'translateX(-100%)' : 'translateX(0)'"
+      style="
+        width: 250px;
+        transition: transform 0.3s ease;
+        z-index: 1040;
+        top: 0;
+        left: 0;
+      "
+    >
+      <nav class="nav flex-column p-3">
+        <a
+          class="nav-link d-flex align-items-center gap-2"
+          routerLink="/user/dashboard"
+          routerLinkActive="active"
+          [class.text-light]="themeService.isDarkMode()"
+          [class.text-dark]="!themeService.isDarkMode()"
+        >
+          <span>📊</span>
+          <span class="d-none d-md-inline">Dashboard</span>
         </a>
-        <a routerLink="/user/maps" routerLinkActive="active">
-          <i class="icon">🗺️</i>
-          <span>My Maps</span>
+        <a
+          class="nav-link d-flex align-items-center gap-2"
+          routerLink="/user/maps"
+          routerLinkActive="active"
+          [class.text-light]="themeService.isDarkMode()"
+          [class.text-dark]="!themeService.isDarkMode()"
+        >
+          <span>🗺️</span>
+          <span class="d-none d-md-inline">My Maps</span>
         </a>
-        <a routerLink="/user/activity" routerLinkActive="active">
-          <i class="icon">📝</i>
-          <span>Activity</span>
+        <a
+          class="nav-link d-flex align-items-center gap-2"
+          routerLink="/user/activity"
+          routerLinkActive="active"
+          [class.text-light]="themeService.isDarkMode()"
+          [class.text-dark]="!themeService.isDarkMode()"
+        >
+          <span>📝</span>
+          <span class="d-none d-md-inline">Activity</span>
         </a>
-        <a routerLink="/user/favorites" routerLinkActive="active">
-          <i class="icon">⭐</i>
-          <span>Favorites</span>
+        <a
+          class="nav-link d-flex align-items-center gap-2"
+          routerLink="/user/favorites"
+          routerLinkActive="active"
+          [class.text-light]="themeService.isDarkMode()"
+          [class.text-dark]="!themeService.isDarkMode()"
+        >
+          <span>⭐</span>
+          <span class="d-none d-md-inline">Favorites</span>
         </a>
-        <a routerLink="/user/shared" routerLinkActive="active">
-          <i class="icon">👥</i>
-          <span>Shared Maps</span>
+        <a
+          class="nav-link d-flex align-items-center gap-2"
+          routerLink="/user/shared"
+          routerLinkActive="active"
+          [class.text-light]="themeService.isDarkMode()"
+          [class.text-dark]="!themeService.isDarkMode()"
+        >
+          <span>👥</span>
+          <span class="d-none d-md-inline">Shared Maps</span>
         </a>
-        <a routerLink="/user/templates" routerLinkActive="active">
-          <i class="icon">📋</i>
-          <span>Templates</span>
+        <a
+          class="nav-link d-flex align-items-center gap-2"
+          routerLink="/user/templates"
+          routerLinkActive="active"
+          [class.text-light]="themeService.isDarkMode()"
+          [class.text-dark]="!themeService.isDarkMode()"
+        >
+          <span>📋</span>
+          <span class="d-none d-md-inline">Templates</span>
         </a>
-        <a routerLink="/user/settings" routerLinkActive="active">
-          <i class="icon">⚙️</i>
-          <span>Settings</span>
+        <a
+          class="nav-link d-flex align-items-center gap-2"
+          routerLink="/user/settings"
+          routerLinkActive="active"
+          [class.text-light]="themeService.isDarkMode()"
+          [class.text-dark]="!themeService.isDarkMode()"
+        >
+          <span>⚙️</span>
+          <span class="d-none d-md-inline">Settings</span>
         </a>
-        <a routerLink="/user/profile" routerLinkActive="active">
-          <i class="icon">👤</i>
-          <span>Profile</span>
+        <a
+          class="nav-link d-flex align-items-center gap-2"
+          routerLink="/user/profile"
+          routerLinkActive="active"
+          [class.text-light]="themeService.isDarkMode()"
+          [class.text-dark]="!themeService.isDarkMode()"
+        >
+          <span>👤</span>
+          <span class="d-none d-md-inline">Profile</span>
         </a>
-        <a routerLink="/user/billing" routerLinkActive="active">
-          <i class="icon">💳</i>
-          <span>Billing</span>
+        <a
+          class="nav-link d-flex align-items-center gap-2"
+          routerLink="/user/billing"
+          routerLinkActive="active"
+          [class.text-light]="themeService.isDarkMode()"
+          [class.text-dark]="!themeService.isDarkMode()"
+        >
+          <span>💳</span>
+          <span class="d-none d-md-inline">Billing</span>
         </a>
-        <a routerLink="/user/blog" routerLinkActive="active">
-          <i class="icon">📚</i>
-          <span>Blog</span>
+        <a
+          class="nav-link d-flex align-items-center gap-2"
+          routerLink="/user/blog"
+          routerLinkActive="active"
+          [class.text-light]="themeService.isDarkMode()"
+          [class.text-dark]="!themeService.isDarkMode()"
+        >
+          <span>📚</span>
+          <span class="d-none d-md-inline">Blog</span>
         </a>
       </nav>
     </aside>
-    <main>
+
+    <main
+      class="flex-grow-1 p-4"
+      [style.margin-left]="!isMobile && isSidebarOpen ? '250px' : '0'"
+      style="transition: margin-left 0.3s ease"
+    >
       <router-outlet></router-outlet>
     </main>
   </div>
 </div>
+
+<!-- Overlay for mobile -->
+<div
+  class="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50"
+  *ngIf="isSidebarOpen && isMobile"
+  (click)="toggleSidebar()"
+  style="z-index: 1030; display: block"
+></div>
