@@ -1,10 +1,10 @@
 <div
-  class="d-flex flex-column min-vh-100"
+  class="d-flex flex-column min-vh-100 overflow-hidden"
   [class.bg-dark]="themeService.isDarkMode()"
   [class.text-light]="themeService.isDarkMode()"
 >
   <header
-    class="bg-white shadow-sm"
+    class="bg-white shadow-sm sticky-top"
     [class.bg-dark]="themeService.isDarkMode()"
     [class.border-bottom]="!themeService.isDarkMode()"
     [class.border-secondary]="themeService.isDarkMode()"
@@ -14,32 +14,42 @@
       [class.navbar-light]="!themeService.isDarkMode()"
       [class.navbar-dark]="themeService.isDarkMode()"
     >
-      <div class="container-fluid">
-        <a class="navbar-brand fw-bold" href="#">Admin Panel</a>
+      <div class="container-fluid px-4">
+        <a
+          class="navbar-brand fw-bold d-flex align-items-center gap-2"
+          href="#"
+        >
+          <span class="fs-4">📊</span>
+          <span>Admin Panel</span>
+        </a>
         <div class="d-flex align-items-center gap-3">
           <button
-            class="btn"
+            class="btn btn-icon"
             [class.btn-outline-secondary]="!themeService.isDarkMode()"
             [class.btn-outline-light]="themeService.isDarkMode()"
             (click)="toggleTheme()"
           >
-            <span>{{ themeService.isDarkMode() ? "🌙" : "☀️" }}</span>
+            <span class="fs-5">{{
+              themeService.isDarkMode() ? "🌙" : "☀️"
+            }}</span>
           </button>
           <button
-            class="navbar-toggler"
+            class="navbar-toggler border-0"
             type="button"
             (click)="toggleSidebar()"
             [attr.aria-expanded]="isSidebarOpen"
           >
             <span class="navbar-toggler-icon"></span>
           </button>
-          <span class="d-none d-md-inline">Admin</span>
-          <img
-            src="assets/images/admin-avatar.jpg"
-            alt="Admin Avatar"
-            class="rounded-circle"
-            style="width: 40px; height: 40px; object-fit: cover"
-          />
+          <div class="d-none d-md-flex align-items-center gap-2">
+            <span class="fw-medium">Admin</span>
+            <img
+              src="assets/images/admin-avatar.jpg"
+              alt="Admin Avatar"
+              class="rounded-circle border"
+              style="width: 40px; height: 40px; object-fit: cover"
+            />
+          </div>
         </div>
       </div>
     </nav>
@@ -59,65 +69,77 @@
         left: 0;
       "
     >
-      <nav class="nav flex-column p-3">
+      <nav class="nav flex-column p-3 gap-1">
         <a
-          class="nav-link d-flex align-items-center gap-2"
+          class="nav-link d-flex align-items-center gap-2 rounded-3 px-3 py-2"
           routerLink="/admin/dashboard"
           routerLinkActive="active"
           [class.text-light]="themeService.isDarkMode()"
           [class.text-dark]="!themeService.isDarkMode()"
+          [class.bg-primary]="!themeService.isDarkMode()"
+          [class.bg-primary-subtle]="themeService.isDarkMode()"
         >
-          <span>📊</span>
+          <span class="fs-5">📊</span>
           <span class="d-none d-md-inline">Dashboard</span>
         </a>
         <a
-          class="nav-link d-flex align-items-center gap-2"
+          class="nav-link d-flex align-items-center gap-2 rounded-3 px-3 py-2"
           routerLink="/admin/users"
           routerLinkActive="active"
           [class.text-light]="themeService.isDarkMode()"
           [class.text-dark]="!themeService.isDarkMode()"
+          [class.bg-primary]="!themeService.isDarkMode()"
+          [class.bg-primary-subtle]="themeService.isDarkMode()"
         >
-          <span>👥</span>
+          <span class="fs-5">👥</span>
           <span class="d-none d-md-inline">Users</span>
         </a>
         <a
-          class="nav-link d-flex align-items-center gap-2"
+          class="nav-link d-flex align-items-center gap-2 rounded-3 px-3 py-2"
           routerLink="/admin/content"
           routerLinkActive="active"
           [class.text-light]="themeService.isDarkMode()"
           [class.text-dark]="!themeService.isDarkMode()"
+          [class.bg-primary]="!themeService.isDarkMode()"
+          [class.bg-primary-subtle]="themeService.isDarkMode()"
         >
-          <span>📝</span>
+          <span class="fs-5">📝</span>
           <span class="d-none d-md-inline">Content</span>
         </a>
         <a
-          class="nav-link d-flex align-items-center gap-2"
+          class="nav-link d-flex align-items-center gap-2 rounded-3 px-3 py-2"
           routerLink="/admin/maps"
           routerLinkActive="active"
           [class.text-light]="themeService.isDarkMode()"
           [class.text-dark]="!themeService.isDarkMode()"
+          [class.bg-primary]="!themeService.isDarkMode()"
+          [class.bg-primary-subtle]="themeService.isDarkMode()"
         >
-          <span>🗺️</span>
+          <span class="fs-5">🗺️</span>
           <span class="d-none d-md-inline">Maps</span>
         </a>
         <a
-          class="nav-link d-flex align-items-center gap-2"
+          class="nav-link d-flex align-items-center gap-2 rounded-3 px-3 py-2"
           routerLink="/admin/settings"
           routerLinkActive="active"
           [class.text-light]="themeService.isDarkMode()"
           [class.text-dark]="!themeService.isDarkMode()"
+          [class.bg-primary]="!themeService.isDarkMode()"
+          [class.bg-primary-subtle]="themeService.isDarkMode()"
         >
-          <span>⚙️</span>
+          <span class="fs-5">⚙️</span>
           <span class="d-none d-md-inline">Settings</span>
         </a>
         <a
-          class="nav-link d-flex align-items-center gap-2"
+          class="nav-link d-flex align-items-center gap-2 rounded-3 px-3 py-2"
           routerLink="/admin/blog"
           routerLinkActive="active"
           [class.text-light]="themeService.isDarkMode()"
           [class.text-dark]="!themeService.isDarkMode()"
+          [class.bg-primary]="!themeService.isDarkMode()"
+          [class.bg-primary-subtle]="themeService.isDarkMode()"
         >
-          <span>📚</span>
+          <span class="fs-5">📚</span>
           <span class="d-none d-md-inline">Blog</span>
         </a>
       </nav>
