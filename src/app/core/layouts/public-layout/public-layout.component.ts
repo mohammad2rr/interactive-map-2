@@ -363,22 +363,87 @@ import { CommonModule } from '@angular/common';
         padding: 0.75rem 1rem;
         border-radius: 0.5rem;
         text-decoration: none;
-        transition: all 0.2s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        margin: 0.25rem 0;
+      }
+      .modern-nav-link::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 4px;
+        background: var(--bs-primary);
+        transform: scaleY(0);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 0 4px 4px 0;
       }
       .modern-nav-link:hover {
         background-color: var(--bs-primary-bg-subtle);
+        transform: translateX(4px);
+      }
+      .modern-nav-link:hover::before {
+        transform: scaleY(1);
       }
       .modern-nav-link.active {
         background-color: var(--bs-primary);
         color: white !important;
+        transform: translateX(4px);
+        box-shadow: 0 4px 12px rgba(var(--bs-primary-rgb), 0.2);
+      }
+      .modern-nav-link.active::before {
+        transform: scaleY(1);
+        background: white;
       }
       .modern-nav-link .icon {
         font-size: 1.2rem;
+        transition: transform 0.3s ease;
+      }
+      .modern-nav-link:hover .icon {
+        transform: scale(1.1);
+      }
+      .modern-nav-link.active .icon {
+        transform: scale(1.1);
       }
       .text-gradient {
         background: linear-gradient(45deg, var(--bs-primary), var(--bs-info));
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+      }
+      .modern-sidebar {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        border-right: 1px solid rgba(0, 0, 0, 0.1);
+      }
+      .bg-dark .modern-sidebar {
+        background: rgba(33, 37, 41, 0.95);
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .fade-in {
+        animation: fadeIn 0.3s ease-in-out;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      .slide-in {
+        animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      @keyframes slideIn {
+        from {
+          transform: translateX(-100%);
+        }
+        to {
+          transform: translateX(0);
+        }
       }
     `,
   ],
