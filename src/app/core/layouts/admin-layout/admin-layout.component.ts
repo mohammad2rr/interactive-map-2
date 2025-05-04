@@ -1,12 +1,12 @@
 import { Component, HostListener } from '@angular/core';
-import { RouterOutlet, RouterLink } from '@angular/router';
+import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { ThemeService } from '../../services/theme.service';
 import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, CommonModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
   template: `
     <div
       class="d-flex flex-column min-vh-100 overflow-hidden fade-in"
@@ -80,6 +80,7 @@ import { CommonModule } from '@angular/common';
               class="modern-nav-link"
               routerLink="/admin/dashboard"
               routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: false }"
               [class.text-light]="themeService.isDarkMode()"
               [class.text-dark]="!themeService.isDarkMode()"
             >
@@ -90,6 +91,7 @@ import { CommonModule } from '@angular/common';
               class="modern-nav-link"
               routerLink="/admin/users"
               routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: false }"
               [class.text-light]="themeService.isDarkMode()"
               [class.text-dark]="!themeService.isDarkMode()"
             >
@@ -100,6 +102,7 @@ import { CommonModule } from '@angular/common';
               class="modern-nav-link"
               routerLink="/admin/content"
               routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: false }"
               [class.text-light]="themeService.isDarkMode()"
               [class.text-dark]="!themeService.isDarkMode()"
             >
@@ -110,6 +113,7 @@ import { CommonModule } from '@angular/common';
               class="modern-nav-link"
               routerLink="/admin/maps"
               routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: false }"
               [class.text-light]="themeService.isDarkMode()"
               [class.text-dark]="!themeService.isDarkMode()"
             >
@@ -120,6 +124,7 @@ import { CommonModule } from '@angular/common';
               class="modern-nav-link"
               routerLink="/admin/settings"
               routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: false }"
               [class.text-light]="themeService.isDarkMode()"
               [class.text-dark]="!themeService.isDarkMode()"
             >
@@ -130,6 +135,7 @@ import { CommonModule } from '@angular/common';
               class="modern-nav-link"
               routerLink="/admin/blog"
               routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: false }"
               [class.text-light]="themeService.isDarkMode()"
               [class.text-dark]="!themeService.isDarkMode()"
             >
