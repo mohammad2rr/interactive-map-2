@@ -1,14 +1,15 @@
 import { Component, HostListener } from '@angular/core';
 import { RouterOutlet, RouterLink } from '@angular/router';
 import { ThemeService } from '../../services/theme.service';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-public-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink],
+  imports: [RouterOutlet, RouterLink, CommonModule],
   template: `
     <div
-      class="d-flex flex-column min-vh-100 overflow-hidden"
+      class="d-flex flex-column min-vh-100 overflow-hidden fade-in"
       [class.bg-dark]="themeService.isDarkMode()"
       [class.text-light]="themeService.isDarkMode()"
     >
@@ -28,21 +29,11 @@ import { ThemeService } from '../../services/theme.service';
               class="navbar-brand fw-bold d-flex align-items-center gap-2"
               routerLink="/"
             >
-              <span class="fs-4">🗺️</span>
-              <span>Interactive Map</span>
+              <span class="fs-4 text-gradient">🗺️</span>
+              <span class="text-gradient">Interactive Map</span>
             </a>
-            <button
-              class="navbar-toggler border-0"
-              type="button"
-              data-bs-toggle="collapse"
-              data-bs-target="#navbarNav"
-              aria-controls="navbarNav"
-              aria-expanded="false"
-              aria-label="Toggle navigation"
-            >
-              <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
+            <!-- Desktop Navigation -->
+            <div class="d-none d-lg-flex align-items-center gap-3">
               <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item">
                   <a
@@ -112,13 +103,146 @@ import { ThemeService } from '../../services/theme.service';
                 >
               </div>
             </div>
+            <!-- Mobile Navigation Toggle -->
+            <div class="d-flex d-lg-none align-items-center gap-2">
+              <button
+                class="btn btn-icon"
+                [class.btn-outline-secondary]="!themeService.isDarkMode()"
+                [class.btn-outline-light]="themeService.isDarkMode()"
+                (click)="toggleTheme()"
+              >
+                <span class="fs-5">{{
+                  themeService.isDarkMode() ? '🌙' : '☀️'
+                }}</span>
+              </button>
+              <button
+                class="btn btn-icon"
+                [class.btn-outline-secondary]="!themeService.isDarkMode()"
+                [class.btn-outline-light]="themeService.isDarkMode()"
+                type="button"
+                (click)="toggleSidebar()"
+                [attr.aria-expanded]="isSidebarOpen"
+              >
+                <span class="fs-5">☰</span>
+              </button>
+            </div>
           </div>
         </nav>
       </header>
 
-      <main class="flex-grow-1 mt-5 pt-4">
-        <router-outlet></router-outlet>
-      </main>
+      <div class="d-flex flex-grow-1 position-relative">
+        <!-- Mobile Sidebar -->
+        <aside
+          class="modern-sidebar position-fixed h-100 d-lg-none"
+          [class.bg-dark]="themeService.isDarkMode()"
+          [class.border-secondary]="themeService.isDarkMode()"
+          [style.transform]="
+            !isSidebarOpen ? 'translateX(-100%)' : 'translateX(0)'
+          "
+          style="
+            width: 250px;
+            transition: transform 0.3s ease;
+            z-index: 1040;
+            top: 0;
+            left: 0;
+          "
+        >
+          <nav class="nav flex-column p-3 gap-1">
+            <a
+              class="modern-nav-link"
+              routerLink="/"
+              routerLinkActive="active"
+              [class.text-light]="themeService.isDarkMode()"
+              [class.text-dark]="!themeService.isDarkMode()"
+              (click)="closeSidebar()"
+            >
+              <span class="icon">🏠</span>
+              <span>Main Page</span>
+            </a>
+            <a
+              class="modern-nav-link"
+              routerLink="/blog"
+              routerLinkActive="active"
+              [class.text-light]="themeService.isDarkMode()"
+              [class.text-dark]="!themeService.isDarkMode()"
+              (click)="closeSidebar()"
+            >
+              <span class="icon">📚</span>
+              <span>Blog</span>
+            </a>
+            <a
+              class="modern-nav-link"
+              routerLink="/map"
+              routerLinkActive="active"
+              [class.text-light]="themeService.isDarkMode()"
+              [class.text-dark]="!themeService.isDarkMode()"
+              (click)="closeSidebar()"
+            >
+              <span class="icon">🗺️</span>
+              <span>Map</span>
+            </a>
+            <a
+              class="modern-nav-link"
+              routerLink="/about"
+              routerLinkActive="active"
+              [class.text-light]="themeService.isDarkMode()"
+              [class.text-dark]="!themeService.isDarkMode()"
+              (click)="closeSidebar()"
+            >
+              <span class="icon">ℹ️</span>
+              <span>About</span>
+            </a>
+            <a
+              class="modern-nav-link"
+              routerLink="/admin/dashboard"
+              routerLinkActive="active"
+              [class.text-light]="themeService.isDarkMode()"
+              [class.text-dark]="!themeService.isDarkMode()"
+              (click)="closeSidebar()"
+            >
+              <span class="icon">👑</span>
+              <span>Admin</span>
+            </a>
+            <a
+              class="modern-nav-link"
+              routerLink="/user/dashboard"
+              routerLinkActive="active"
+              [class.text-light]="themeService.isDarkMode()"
+              [class.text-dark]="!themeService.isDarkMode()"
+              (click)="closeSidebar()"
+            >
+              <span class="icon">👤</span>
+              <span>User</span>
+            </a>
+            <div class="mt-auto pt-3 border-top">
+              <a
+                class="modern-nav-link"
+                routerLink="/login"
+                [class.text-light]="themeService.isDarkMode()"
+                [class.text-dark]="!themeService.isDarkMode()"
+                (click)="closeSidebar()"
+              >
+                <span class="icon">🔑</span>
+                <span>Login</span>
+              </a>
+              <a
+                class="modern-nav-link"
+                routerLink="/register"
+                [class.text-light]="themeService.isDarkMode()"
+                [class.text-dark]="!themeService.isDarkMode()"
+                (click)="closeSidebar()"
+              >
+                <span class="icon">✍️</span>
+                <span>Register</span>
+              </a>
+            </div>
+          </nav>
+        </aside>
+
+        <main class="flex-grow-1 p-4 fade-in">
+          <router-outlet></router-outlet>
+        </main>
+      </div>
 
       <footer class="bg-dark text-light py-5">
         <div class="container px-4">
@@ -188,6 +312,19 @@ import { ThemeService } from '../../services/theme.service';
         </div>
       </footer>
     </div>
+
+    <!-- Overlay for mobile -->
+    <div
+      class="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 fade-in"
+      *ngIf="isSidebarOpen && isMobile"
+      (click)="toggleSidebar()"
+      style="
+        z-index: 1030;
+        display: block;
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+      "
+    ></div>
   `,
   styles: [
     `
@@ -205,11 +342,76 @@ import { ThemeService } from '../../services/theme.service';
         justify-content: center;
         border-radius: 50%;
       }
+      .modern-button {
+        background: none;
+        border: 1px solid;
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .modern-button:hover {
+        opacity: 0.8;
+      }
+      .modern-button .icon {
+        font-size: 1.2rem;
+      }
+      .modern-nav-link {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        transition: all 0.2s ease;
+      }
+      .modern-nav-link:hover {
+        background-color: var(--bs-primary-bg-subtle);
+      }
+      .modern-nav-link.active {
+        background-color: var(--bs-primary);
+        color: white !important;
+      }
+      .modern-nav-link .icon {
+        font-size: 1.2rem;
+      }
+      .text-gradient {
+        background: linear-gradient(45deg, var(--bs-primary), var(--bs-info));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
     `,
   ],
 })
 export class PublicLayoutComponent {
-  constructor(public themeService: ThemeService) {}
+  isSidebarOpen = false;
+  isMobile = false;
+
+  constructor(public themeService: ThemeService) {
+    this.checkScreenSize();
+  }
+
+  @HostListener('window:resize')
+  onResize() {
+    this.checkScreenSize();
+  }
+
+  private checkScreenSize() {
+    this.isMobile = window.innerWidth < 992; // Changed to match Bootstrap's lg breakpoint
+    if (!this.isMobile) {
+      this.isSidebarOpen = false;
+    }
+  }
+
+  toggleSidebar() {
+    this.isSidebarOpen = !this.isSidebarOpen;
+  }
+
+  closeSidebar() {
+    if (this.isMobile) {
+      this.isSidebarOpen = false;
+    }
+  }
 
   toggleTheme() {
     this.themeService.toggleTheme();
