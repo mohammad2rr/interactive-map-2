@@ -4,12 +4,14 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { MonacoEditorModule } from 'ngx-monaco-editor';
+import { RouterModule } from '@angular/router';
 
 import { ImageUploaderComponent } from './components/image-uploader/image-uploader.component';
 import { GeoJsonEditorComponent } from './components/geo-json-editor/geo-json-editor.component';
 import { ShapeComponent } from './components/shape/shape.component';
 import { ImageTracerService } from './services/image-tracer.service';
 import { GeoJsonStorageService } from './services/geo-json-storage.service';
+import { imageToGeoJsonRoutes } from './image-to-geoJson.routes';
 
 @NgModule({
   imports: [
@@ -18,6 +20,7 @@ import { GeoJsonStorageService } from './services/geo-json-storage.service';
     ReactiveFormsModule,
     HttpClientModule,
     MonacoEditorModule.forRoot(),
+    RouterModule.forChild(imageToGeoJsonRoutes),
     ImageUploaderComponent,
     GeoJsonEditorComponent,
     ShapeComponent,

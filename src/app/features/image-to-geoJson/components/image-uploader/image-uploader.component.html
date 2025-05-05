@@ -1,37 +1,77 @@
 <!-- image-uploader.component.html -->
-<div class="uploader-container">
-  <div class="file-selector">
-    <input
-      type="file"
-      accept="image/*"
-      (change)="onFileSelected($event)"
-      #fileInput
-    />
-    <button (click)="fileInput.click()">Select Image</button>
-    <span *ngIf="selectedFile">{{ selectedFile.name }}</span>
-  </div>
+<div class="container-fluid p-4">
+  <div class="row">
+    <div class="col-12 col-md-4">
+      <div class="uploader-container">
+        <div class="file-selector">
+          <input
+            type="file"
+            accept="image/*"
+            (change)="onFileSelected($event)"
+            #fileInput
+          />
+          <button class="btn btn-primary d-flex align-items-center gap-2" (click)="fileInput.click()">
+            <i class="material-icons">upload_file</i>
+            <span>Select Image</span>
+          </button>
+          <span *ngIf="selectedFile" class="d-flex align-items-center gap-2">
+            <i class="material-icons text-success">check_circle</i>
+            {{ selectedFile.name }}
+          </span>
+        </div>
 
-  <div class="preview" *ngIf="previewUrl">
-    <img [src]="previewUrl" alt="Selected image preview" />
-  </div>
+        <div class="preview" *ngIf="previewUrl">
+          <img [src]="previewUrl" alt="Selected image preview" />
+        </div>
 
-  <div class="controls">
-    <button (click)="processImage()" [disabled]="!selectedFile || isTracing">
-      {{ isTracing ? "Processing..." : "Convert to Shape" }}
-    </button>
-  </div>
+        <div class="controls mt-3">
+          <button 
+            class="btn btn-success w-100 d-flex align-items-center justify-content-center gap-2"
+            (click)="processImage()" 
+            [disabled]="!selectedFile || isTracing"
+          >
+            <i class="material-icons">{{ isTracing ? 'hourglass_full' : 'transform' }}</i>
+            <span>{{ isTracing ? "Processing..." : "Convert to Shape" }}</span>
+          </button>
+        </div>
 
-  <div class="options">
-    <label>
-      Threshold:
-      <input
-        type="range"
-        min="0"
-        max="255"
-        [(ngModel)]="traceOptions.threshold"
-      />
-      {{ traceOptions.threshold }}
-    </label>
-    <!-- Add more options as needed -->
+        <div class="options mt-3">
+          <label class="d-flex align-items-center gap-2">
+            <i class="material-icons">tune</i>
+            <span>Threshold:</span>
+            <input
+              type="range"
+              class="form-range"
+              min="0"
+              max="255"
+              [(ngModel)]="traceOptions.threshold"
+            />
+            <span class="badge bg-secondary">{{ traceOptions.threshold }}</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-8">
+      <div class="row">
+        <!-- GeoJSON Editor -->
+        <div class="col-12 mb-4 editor-container">
+          <div class="editor-header">
+            <i class="material-icons">code</i>
+            <span>GeoJSON Editor</span>
+          </div>
+          <router-outlet></router-outlet>
+        </div>
+
+        <!-- Shape Preview -->
+        <div class="col-12 preview-container">
+          <div class="preview-header">
+            <i class="material-icons">preview</i>
+            <span>Shape Preview</span>
+          </div>
+          <router-outlet name="preview"></router-outlet>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

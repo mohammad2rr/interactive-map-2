@@ -1,10 +1,16 @@
 // image-tracer.service.ts
 import { Injectable } from '@angular/core';
-import { Feature, GeoJSON, Geometry } from 'geojson';
+import {
+  Feature,
+  GeoJSON,
+  Geometry,
+  FeatureCollection,
+  Polygon,
+} from 'geojson';
 import * as potrace from 'potrace';
 import * as svgson from 'svgson';
 import * as turf from '@turf/turf';
-import { TraceOptions } from './interfaces';
+import { TraceOptions, FeatureProperties } from './interfaces';
 
 interface PotraceOptions {
   color?: string;
@@ -74,7 +80,6 @@ export class ImageTracerService {
       // Draw image to canvas
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-      // Default options with proper types for potrace
       const traceOptions: PotraceOptions = {
         color: options.color || '#000000',
         threshold: options.threshold !== undefined ? options.threshold : 120,
@@ -106,33 +111,85 @@ export class ImageTracerService {
     // Extract paths from SVG
     const paths = this.extractPaths(svgJson);
 
-    // Convert paths to GeoJSON features
+    // Convert paths to GeoJSON features with validation
     const features = paths
       .map((path, index) => {
-        const coordinates = this.parseSvgPath(path.d);
-        if (!coordinates || coordinates.length < 3) return null;
+        try {
+          const coordinates = this.parseSvgPath(path.d);
+          if (!coordinates || coordinates.length < 3) return null;
 
-        const feature: Feature = {
-          type: 'Feature',
-          properties: {
-            id: `shape-${index}`,
-            stroke: path.stroke || '#000000',
-            fill: path.fill || 'none',
-            strokeWidth: path['stroke-width'] || 1,
-          },
-          geometry: {
-            type: 'Polygon',
-            coordinates: [coordinates],
-          },
-        };
-        return feature;
+          // Check if the polygon is closed
+          const firstPoint = coordinates[0];
+          const lastPoint = coordinates[coordinates.length - 1];
+          if (
+            firstPoint[0] !== lastPoint[0] ||
+            firstPoint[1] !== lastPoint[1]
+          ) {
+            coordinates.push([...firstPoint]); // Close the polygon
+          }
+
+          // Create and validate polygon
+          const polygon = turf.polygon([coordinates]);
+          if (!turf.booleanValid(polygon)) {
+            console.warn(
+              `Invalid polygon at index ${index}, attempting to fix...`
+            );
+            const fixed = turf.unkinkPolygon(polygon);
+            if (fixed.features.length > 0) {
+              const feature: Feature<Polygon, FeatureProperties> = {
+                type: 'Feature',
+                properties: {
+                  id: `shape-${index}`,
+                  stroke: path.stroke || '#000000',
+                  fill: path.fill || 'none',
+                  strokeWidth: path['stroke-width'] || 1,
+                },
+                geometry: fixed.features[0].geometry as Polygon,
+              };
+              return feature;
+            }
+            return null;
+          }
+
+          const feature: Feature<Polygon, FeatureProperties> = {
+            type: 'Feature',
+            properties: {
+              id: `shape-${index}`,
+              stroke: path.stroke || '#000000',
+              fill: path.fill || 'none',
+              strokeWidth: path['stroke-width'] || 1,
+            },
+            geometry: {
+              type: 'Polygon',
+              coordinates: [coordinates],
+            },
+          };
+          return feature;
+        } catch (error) {
+          console.warn(`Error processing path at index ${index}:`, error);
+          return null;
+        }
       })
-      .filter((feature): feature is Feature => feature !== null);
+      .filter(
+        (feature): feature is Feature<Polygon, FeatureProperties> =>
+          feature !== null
+      );
 
-    return {
+    // Create and validate the FeatureCollection
+    const featureCollection: FeatureCollection<Polygon, FeatureProperties> = {
       type: 'FeatureCollection',
       features,
     };
+
+    // Validate each feature individually since turf.booleanValid doesn't handle FeatureCollections well
+    const invalidFeatures = features.filter(
+      (feature) => !turf.booleanValid(feature.geometry)
+    );
+    if (invalidFeatures.length > 0) {
+      throw new Error('Some features in the GeoJSON are invalid');
+    }
+
+    return featureCollection;
   }
 
   private extractPaths(svgJson: any): any[] {

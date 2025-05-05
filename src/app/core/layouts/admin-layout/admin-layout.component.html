@@ -77,6 +77,16 @@
         </a>
         <a
           class="modern-nav-link"
+          routerLink="/admin/image-to-geojson"
+          routerLinkActive="active"
+          [class.text-light]="themeService.isDarkMode()"
+          [class.text-dark]="!themeService.isDarkMode()"
+        >
+          <span class="icon">🖼️</span>
+          <span class="d-none d-md-inline">Image to GeoJSON</span>
+        </a>
+        <a
+          class="modern-nav-link"
           routerLink="/admin/users"
           routerLinkActive="active"
           [class.text-light]="themeService.isDarkMode()"
@@ -105,6 +115,7 @@
           <span class="icon">🗺️</span>
           <span class="d-none d-md-inline">Maps</span>
         </a>
+
         <a
           class="modern-nav-link"
           routerLink="/admin/settings"
@@ -124,6 +135,21 @@
         >
           <span class="icon">📚</span>
           <span class="d-none d-md-inline">Blog</span>
+        </a>
+
+        <!-- Divider -->
+        <div class="border-bottom my-3 opacity-25"></div>
+        <!-- Public section links -->
+        <a
+          class="modern-nav-link"
+          routerLink="/"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          [class.text-light]="themeService.isDarkMode()"
+          [class.text-dark]="!themeService.isDarkMode()"
+        >
+          <span class="icon">🏠</span>
+          <span class="d-none d-md-inline">Main Site</span>
         </a>
       </nav>
     </aside>

@@ -1,18 +1,16 @@
 // shape.component.ts
 import {
   Component,
-  Input,
-  Output,
-  EventEmitter,
   ElementRef,
-  AfterViewInit,
-  OnChanges,
+  OnInit,
+  OnDestroy,
   ViewChild,
-  SimpleChanges,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import * as d3 from 'd3';
 import { Feature, FeatureCollection } from 'geojson';
+import { GeoJsonStateService } from '../../services/geo-json-state.service';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-shape',
@@ -31,37 +29,40 @@ import { Feature, FeatureCollection } from 'geojson';
   standalone: true,
   imports: [CommonModule]
 })
-export class ShapeComponent implements AfterViewInit, OnChanges {
-  @Input() geoJsonData!: FeatureCollection;
-  @Input() width = 500;
-  @Input() height = 500;
-  @Input() interactive = true;
-  @Input() fillColor = '#cccccc';
-  @Input() strokeColor = '#333333';
-
-  @Output() featureClicked = new EventEmitter<Feature>();
-  @Output() featureHovered = new EventEmitter<Feature>();
-  @Output() featureUnhovered = new EventEmitter<Feature>();
-
+export class ShapeComponent implements OnInit, OnDestroy {
   @ViewChild('shapeContainer') container!: ElementRef;
 
+  private destroy$ = new Subject<void>();
   private svg: any;
   private projection: any;
   private pathGenerator: any;
+  
+  width = 500;
+  height = 500;
+  interactive = true;
+  fillColor = '#cccccc';
+  strokeColor = '#333333';
 
-  ngAfterViewInit(): void {
-    this.initD3();
-    this.renderShape();
+  constructor(private geoJsonState: GeoJsonStateService) {}
+
+  ngOnInit(): void {
+    this.geoJsonState.geoJsonData$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(data => {
+        if (data) {
+          this.drawShape(data as FeatureCollection);
+        }
+      });
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if ((changes['geoJsonData'] || changes['width'] || changes['height']) && this.container) {
-      this.initD3();
-      this.renderShape();
-    }
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
-  private initD3(): void {
+  private drawShape(geoJsonData: FeatureCollection): void {
+    if (!this.container) return;
+
     // Clear previous render
     const container = this.container.nativeElement;
     container.innerHTML = '';
@@ -73,23 +74,19 @@ export class ShapeComponent implements AfterViewInit, OnChanges {
       .attr('width', this.width)
       .attr('height', this.height);
 
-    // Set up projection - adjust based on your needs
+    // Set up projection
     this.projection = d3
       .geoIdentity()
       .reflectY(true) // SVG y-axis is top-down, GeoJSON is bottom-up
-      .fitSize([this.width, this.height], this.geoJsonData);
+      .fitSize([this.width, this.height], geoJsonData);
 
     // Set up path generator
     this.pathGenerator = d3.geoPath().projection(this.projection);
-  }
-
-  private renderShape(): void {
-    if (!this.geoJsonData || !this.pathGenerator) return;
 
     // Draw each feature
     const features = this.svg
       .selectAll('path')
-      .data(this.geoJsonData.features)
+      .data(geoJsonData.features)
       .enter()
       .append('path')
       .attr('d', (d: Feature) => this.pathGenerator(d))
@@ -109,16 +106,11 @@ export class ShapeComponent implements AfterViewInit, OnChanges {
         d3.select(event.target as Element)
           .attr('fill', '#ff9900')
           .attr('stroke', '#cc6600');
-        this.featureHovered.emit(d);
       })
       .on('mouseleave', (event: MouseEvent, d: Feature) => {
         d3.select(event.target as Element)
           .attr('fill', d.properties?.['fill'] || this.fillColor)
           .attr('stroke', d.properties?.['stroke'] || this.strokeColor);
-        this.featureUnhovered.emit(d);
-      })
-      .on('click', (_: MouseEvent, d: Feature) => {
-        this.featureClicked.emit(d);
       });
   }
 }
