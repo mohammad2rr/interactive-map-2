@@ -237,7 +237,12 @@ export class ImageTracerService {
           feature !== null
       );
 
+    // Add detailed error logging when no valid features are created
     if (features.length === 0) {
+      console.error(
+        'SVG paths could not be converted to valid GeoJSON features. Paths:',
+        paths
+      );
       throw new Error('No valid features could be created from the SVG');
     }
 

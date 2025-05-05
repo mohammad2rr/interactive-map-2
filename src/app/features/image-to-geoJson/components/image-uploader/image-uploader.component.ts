@@ -94,7 +94,7 @@ export class ImageUploaderComponent implements OnInit {
     } catch (error) {
       console.error('Image tracing failed:', error);
       this.errorOccurred.emit(
-        'Failed to process image. Please try another image.'
+        `Failed to process image. ${(error as any).message || 'Please try another image.'}`
       );
     } finally {
       this.isTracing = false;
