@@ -105,6 +105,98 @@ export class ImageTracerService {
     });
   }
 
+  private normalizeCoordinates(coords: [number, number][]): [number, number][] {
+    // Filter out points that are too close together
+    const minDistance = 0.00001;
+    const normalized = coords.filter((point, index, array) => {
+      if (index === 0) return true;
+      const prev = array[index - 1];
+      const distance = Math.sqrt(
+        Math.pow(point[0] - prev[0], 2) + Math.pow(point[1] - prev[1], 2)
+      );
+      return distance > minDistance;
+    });
+
+    // Ensure we have enough points
+    if (normalized.length < 3) {
+      return [];
+    }
+
+    // Check if the polygon is closed
+    const first = normalized[0];
+    const last = normalized[normalized.length - 1];
+    const distance = Math.sqrt(
+      Math.pow(first[0] - last[0], 2) + Math.pow(first[1] - last[1], 2)
+    );
+
+    // Close the polygon if needed
+    if (distance > minDistance) {
+      normalized.push([...first]);
+    }
+
+    return normalized;
+  }
+
+  private cleanCoordinates(coords: [number, number][]): [number, number][] {
+    const normalized = this.normalizeCoordinates(coords);
+    if (normalized.length < 4) return normalized;
+
+    try {
+      // Create a line string and simplify with a small tolerance
+      const line = turf.lineString(normalized);
+      const simplified = turf.simplify(line, {
+        tolerance: 0.01,
+        highQuality: true,
+        mutate: false,
+      });
+
+      // Get coordinates and ensure they're still valid
+      const result = simplified.geometry.coordinates as [number, number][];
+      return this.normalizeCoordinates(result);
+    } catch (error) {
+      console.warn('Error simplifying coordinates:', error);
+      return normalized;
+    }
+  }
+
+  private createValidPolygon(
+    coords: [number, number][]
+  ): Feature<Polygon> | null {
+    try {
+      // Check if we have enough points
+      if (coords.length < 4) {
+        return null;
+      }
+
+      // Create polygon with single ring
+      const polygon = turf.polygon([coords]);
+
+      // Validate the polygon
+      if (!turf.booleanValid(polygon)) {
+        // Try to fix using buffer technique
+        const buffered = turf.buffer(turf.lineString(coords), 0.00001, {
+          units: 'degrees',
+          steps: 8,
+        });
+
+        if (!buffered) return null;
+
+        // Get the largest polygon if multiple were created
+        const polys = turf.explode(buffered);
+        const hull = turf.convex(polys);
+
+        if (hull && turf.booleanValid(hull)) {
+          return hull;
+        }
+      } else {
+        return polygon;
+      }
+    } catch (error) {
+      console.warn('Error creating polygon:', error);
+    }
+    return null;
+  }
+
   private async convertSvgToGeoJson(svg: string): Promise<GeoJSON> {
     const svgJson = await svgson.parse(svg);
     const paths = this.extractPaths(svgJson);
@@ -112,79 +204,29 @@ export class ImageTracerService {
     const features = paths
       .map((path, index) => {
         try {
+          // Get coordinates from SVG path
           const coordinates = this.parseSvgPath(path.d);
           if (!coordinates || coordinates.length < 3) return null;
 
+          // Clean and normalize coordinates
           const cleanedCoords = this.cleanCoordinates(coordinates);
-          if (cleanedCoords.length < 3) return null;
+          if (cleanedCoords.length < 4) return null;
 
-          try {
-            // Try to create a valid polygon
-            let polygon = turf.polygon([[...cleanedCoords]]);
+          // Create valid polygon
+          const polygon = this.createValidPolygon(cleanedCoords);
+          if (!polygon) return null;
 
-            // If the polygon is valid, use it directly
-            if (turf.booleanValid(polygon)) {
-              return this.createFeature(
-                polygon.geometry as Polygon,
-                path,
-                index
-              );
-            }
-
-            // If invalid, try to fix with buffer and unbuffer technique
-            console.warn(
-              `Invalid polygon at index ${index}, attempting to fix...`
-            );
-
-            // Create a small buffer around the invalid polygon
-            const buffered = turf.buffer(
-              turf.lineString(cleanedCoords),
-              0.000001,
-              {
-                units: 'degrees',
-              }
-            );
-
-            if (!buffered) return null;
-
-            // Get the coordinates of the largest polygon from the buffer
-            const coords = buffered.geometry.coordinates[0][0];
-            polygon = turf.polygon([coords as Position[]]);
-
-            // Validate the fixed polygon
-            if (turf.booleanValid(polygon)) {
-              return this.createFeature(
-                polygon.geometry as Polygon,
-                path,
-                index
-              );
-            }
-
-            // If still invalid, try unkinkPolygon as last resort
-            const fixed = turf.unkinkPolygon(polygon);
-            if (fixed.features.length > 0) {
-              // Get the largest polygon from the fixed features
-              let largestArea = 0;
-              let largestFeature = fixed.features[0];
-
-              fixed.features.forEach((feature) => {
-                const area = turf.area(feature);
-                if (area > largestArea) {
-                  largestArea = area;
-                  largestFeature = feature;
-                }
-              });
-
-              return this.createFeature(
-                largestFeature.geometry as Polygon,
-                path,
-                index
-              );
-            }
-          } catch (error) {
-            console.warn(`Error creating polygon at index ${index}:`, error);
-          }
-          return null;
+          // Return feature with properties
+          return {
+            type: 'Feature',
+            properties: {
+              id: `shape-${index}`,
+              stroke: path.stroke || '#000000',
+              fill: path.fill || 'none',
+              strokeWidth: path['stroke-width'] || 1,
+            },
+            geometry: polygon.geometry,
+          };
         } catch (error) {
           console.warn(`Error processing path at index ${index}:`, error);
           return null;
@@ -220,56 +262,6 @@ export class ImageTracerService {
       },
       geometry,
     };
-  }
-
-  private cleanCoordinates(coords: [number, number][]): [number, number][] {
-    if (coords.length < 3) return coords;
-
-    // First remove consecutive duplicates with higher precision
-    const withoutDuplicates = coords.filter((point, index, array) => {
-      if (index === 0) return true;
-      const prevPoint = array[index - 1];
-      return !(
-        Math.abs(point[0] - prevPoint[0]) < 0.0000001 &&
-        Math.abs(point[1] - prevPoint[1]) < 0.0000001
-      );
-    });
-
-    // Ensure minimum points for a polygon
-    if (withoutDuplicates.length < 3) return withoutDuplicates;
-
-    try {
-      // Create a proper ring by ensuring first and last points match
-      const ring = [...withoutDuplicates];
-      const firstPoint = ring[0];
-      const lastPoint = ring[ring.length - 1];
-
-      if (
-        Math.abs(firstPoint[0] - lastPoint[0]) > 0.0000001 ||
-        Math.abs(firstPoint[1] - lastPoint[1]) > 0.0000001
-      ) {
-        ring.push([...firstPoint]);
-      }
-
-      // Simplify with turf, but preserve topology
-      const line = turf.lineString(ring);
-      const simplified = turf.simplify(line, {
-        tolerance: 0.1,
-        highQuality: true,
-        mutate: false,
-      });
-
-      const simplifiedCoords = simplified.geometry.coordinates as [
-        number,
-        number
-      ][];
-
-      // Ensure we still have a valid polygon
-      return simplifiedCoords.length >= 3 ? simplifiedCoords : ring;
-    } catch (error) {
-      console.warn('Error simplifying coordinates:', error);
-      return withoutDuplicates;
-    }
   }
 
   private extractPaths(svgJson: any): any[] {
