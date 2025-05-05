@@ -35,9 +35,10 @@ export class ImageUploaderComponent implements OnInit {
   // Configuration options for the tracing
   traceOptions: TraceOptions = {
     color: '#000000',
-    threshold: 120,
-    turdSize: 10,
-    turnPolicy: 'minority',
+    threshold: 128,  // More balanced threshold
+    turdSize: 25,    // Increased to remove small artifacts
+    turnPolicy: 'majority',  // Changed to majority for better shape detection
+    background: '#ffffff'    // Added explicit background
   };
 
   constructor(

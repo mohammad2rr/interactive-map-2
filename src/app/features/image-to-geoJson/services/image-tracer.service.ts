@@ -6,6 +6,7 @@ import {
   Geometry,
   FeatureCollection,
   Polygon,
+  Position,
 } from 'geojson';
 import * as potrace from 'potrace';
 import * as svgson from 'svgson';
@@ -105,66 +106,85 @@ export class ImageTracerService {
   }
 
   private async convertSvgToGeoJson(svg: string): Promise<GeoJSON> {
-    // Parse SVG to JSON
     const svgJson = await svgson.parse(svg);
-
-    // Extract paths from SVG
     const paths = this.extractPaths(svgJson);
 
-    // Convert paths to GeoJSON features with validation
     const features = paths
       .map((path, index) => {
         try {
           const coordinates = this.parseSvgPath(path.d);
           if (!coordinates || coordinates.length < 3) return null;
 
-          // Check if the polygon is closed
-          const firstPoint = coordinates[0];
-          const lastPoint = coordinates[coordinates.length - 1];
-          if (
-            firstPoint[0] !== lastPoint[0] ||
-            firstPoint[1] !== lastPoint[1]
-          ) {
-            coordinates.push([...firstPoint]); // Close the polygon
-          }
+          const cleanedCoords = this.cleanCoordinates(coordinates);
+          if (cleanedCoords.length < 3) return null;
 
-          // Create and validate polygon
-          const polygon = turf.polygon([coordinates]);
-          if (!turf.booleanValid(polygon)) {
+          try {
+            // Try to create a valid polygon
+            let polygon = turf.polygon([[...cleanedCoords]]);
+
+            // If the polygon is valid, use it directly
+            if (turf.booleanValid(polygon)) {
+              return this.createFeature(
+                polygon.geometry as Polygon,
+                path,
+                index
+              );
+            }
+
+            // If invalid, try to fix with buffer and unbuffer technique
             console.warn(
               `Invalid polygon at index ${index}, attempting to fix...`
             );
+
+            // Create a small buffer around the invalid polygon
+            const buffered = turf.buffer(
+              turf.lineString(cleanedCoords),
+              0.000001,
+              {
+                units: 'degrees',
+              }
+            );
+
+            if (!buffered) return null;
+
+            // Get the coordinates of the largest polygon from the buffer
+            const coords = buffered.geometry.coordinates[0][0];
+            polygon = turf.polygon([coords as Position[]]);
+
+            // Validate the fixed polygon
+            if (turf.booleanValid(polygon)) {
+              return this.createFeature(
+                polygon.geometry as Polygon,
+                path,
+                index
+              );
+            }
+
+            // If still invalid, try unkinkPolygon as last resort
             const fixed = turf.unkinkPolygon(polygon);
             if (fixed.features.length > 0) {
-              const feature: Feature<Polygon, FeatureProperties> = {
-                type: 'Feature',
-                properties: {
-                  id: `shape-${index}`,
-                  stroke: path.stroke || '#000000',
-                  fill: path.fill || 'none',
-                  strokeWidth: path['stroke-width'] || 1,
-                },
-                geometry: fixed.features[0].geometry as Polygon,
-              };
-              return feature;
-            }
-            return null;
-          }
+              // Get the largest polygon from the fixed features
+              let largestArea = 0;
+              let largestFeature = fixed.features[0];
 
-          const feature: Feature<Polygon, FeatureProperties> = {
-            type: 'Feature',
-            properties: {
-              id: `shape-${index}`,
-              stroke: path.stroke || '#000000',
-              fill: path.fill || 'none',
-              strokeWidth: path['stroke-width'] || 1,
-            },
-            geometry: {
-              type: 'Polygon',
-              coordinates: [coordinates],
-            },
-          };
-          return feature;
+              fixed.features.forEach((feature) => {
+                const area = turf.area(feature);
+                if (area > largestArea) {
+                  largestArea = area;
+                  largestFeature = feature;
+                }
+              });
+
+              return this.createFeature(
+                largestFeature.geometry as Polygon,
+                path,
+                index
+              );
+            }
+          } catch (error) {
+            console.warn(`Error creating polygon at index ${index}:`, error);
+          }
+          return null;
         } catch (error) {
           console.warn(`Error processing path at index ${index}:`, error);
           return null;
@@ -175,21 +195,81 @@ export class ImageTracerService {
           feature !== null
       );
 
-    // Create and validate the FeatureCollection
-    const featureCollection: FeatureCollection<Polygon, FeatureProperties> = {
+    if (features.length === 0) {
+      throw new Error('No valid features could be created from the SVG');
+    }
+
+    return {
       type: 'FeatureCollection',
       features,
     };
+  }
 
-    // Validate each feature individually since turf.booleanValid doesn't handle FeatureCollections well
-    const invalidFeatures = features.filter(
-      (feature) => !turf.booleanValid(feature.geometry)
-    );
-    if (invalidFeatures.length > 0) {
-      throw new Error('Some features in the GeoJSON are invalid');
+  private createFeature(
+    geometry: Polygon,
+    path: any,
+    index: number
+  ): Feature<Polygon, FeatureProperties> {
+    return {
+      type: 'Feature',
+      properties: {
+        id: `shape-${index}`,
+        stroke: path.stroke || '#000000',
+        fill: path.fill || 'none',
+        strokeWidth: path['stroke-width'] || 1,
+      },
+      geometry,
+    };
+  }
+
+  private cleanCoordinates(coords: [number, number][]): [number, number][] {
+    if (coords.length < 3) return coords;
+
+    // First remove consecutive duplicates with higher precision
+    const withoutDuplicates = coords.filter((point, index, array) => {
+      if (index === 0) return true;
+      const prevPoint = array[index - 1];
+      return !(
+        Math.abs(point[0] - prevPoint[0]) < 0.0000001 &&
+        Math.abs(point[1] - prevPoint[1]) < 0.0000001
+      );
+    });
+
+    // Ensure minimum points for a polygon
+    if (withoutDuplicates.length < 3) return withoutDuplicates;
+
+    try {
+      // Create a proper ring by ensuring first and last points match
+      const ring = [...withoutDuplicates];
+      const firstPoint = ring[0];
+      const lastPoint = ring[ring.length - 1];
+
+      if (
+        Math.abs(firstPoint[0] - lastPoint[0]) > 0.0000001 ||
+        Math.abs(firstPoint[1] - lastPoint[1]) > 0.0000001
+      ) {
+        ring.push([...firstPoint]);
+      }
+
+      // Simplify with turf, but preserve topology
+      const line = turf.lineString(ring);
+      const simplified = turf.simplify(line, {
+        tolerance: 0.1,
+        highQuality: true,
+        mutate: false,
+      });
+
+      const simplifiedCoords = simplified.geometry.coordinates as [
+        number,
+        number
+      ][];
+
+      // Ensure we still have a valid polygon
+      return simplifiedCoords.length >= 3 ? simplifiedCoords : ring;
+    } catch (error) {
+      console.warn('Error simplifying coordinates:', error);
+      return withoutDuplicates;
     }
-
-    return featureCollection;
   }
 
   private extractPaths(svgJson: any): any[] {
@@ -226,7 +306,7 @@ export class ImageTracerService {
         case 'M': // Move to (absolute)
           for (let i = 0; i < args.length; i += 2) {
             currentPoint = [args[i], args[i + 1]];
-            points.push(currentPoint);
+            points.push([...currentPoint]);
           }
           break;
         case 'm': // Move to (relative)
@@ -235,46 +315,77 @@ export class ImageTracerService {
               currentPoint[0] + args[i],
               currentPoint[1] + args[i + 1],
             ];
-            points.push(currentPoint);
+            points.push([...currentPoint]);
           }
           break;
         case 'L': // Line to (absolute)
-        case 'H': // Horizontal line to (absolute)
-        case 'V': // Vertical line to (absolute)
-          for (let i = 0; i < args.length; i++) {
-            if (type === 'H') {
-              currentPoint = [args[i], currentPoint[1]];
-            } else if (type === 'V') {
-              currentPoint = [currentPoint[0], args[i]];
-            } else {
-              currentPoint = [args[i], args[i + 1]];
-              i++; // Skip next arg as we used two args
-            }
-            points.push(currentPoint);
+          for (let i = 0; i < args.length; i += 2) {
+            currentPoint = [args[i], args[i + 1]];
+            points.push([...currentPoint]);
           }
           break;
         case 'l': // Line to (relative)
+          for (let i = 0; i < args.length; i += 2) {
+            currentPoint = [
+              currentPoint[0] + args[i],
+              currentPoint[1] + args[i + 1],
+            ];
+            points.push([...currentPoint]);
+          }
+          break;
+        case 'H': // Horizontal line to (absolute)
+          for (let i = 0; i < args.length; i++) {
+            currentPoint = [args[i], currentPoint[1]];
+            points.push([...currentPoint]);
+          }
+          break;
         case 'h': // Horizontal line to (relative)
+          for (let i = 0; i < args.length; i++) {
+            currentPoint = [currentPoint[0] + args[i], currentPoint[1]];
+            points.push([...currentPoint]);
+          }
+          break;
+        case 'V': // Vertical line to (absolute)
+          for (let i = 0; i < args.length; i++) {
+            currentPoint = [currentPoint[0], args[i]];
+            points.push([...currentPoint]);
+          }
+          break;
         case 'v': // Vertical line to (relative)
           for (let i = 0; i < args.length; i++) {
-            if (type === 'h') {
-              currentPoint = [currentPoint[0] + args[i], currentPoint[1]];
-            } else if (type === 'v') {
-              currentPoint = [currentPoint[0], currentPoint[1] + args[i]];
-            } else {
-              currentPoint = [
-                currentPoint[0] + args[i],
-                currentPoint[1] + args[i + 1],
-              ];
-              i++; // Skip next arg as we used two args
-            }
-            points.push(currentPoint);
+            currentPoint = [currentPoint[0], currentPoint[1] + args[i]];
+            points.push([...currentPoint]);
+          }
+          break;
+        case 'C': // Cubic Bezier curve (absolute)
+          for (let i = 0; i < args.length; i += 6) {
+            // Add the end point of the curve
+            currentPoint = [args[i + 4], args[i + 5]];
+            points.push([...currentPoint]);
+          }
+          break;
+        case 'c': // Cubic Bezier curve (relative)
+          for (let i = 0; i < args.length; i += 6) {
+            // Add the end point of the curve
+            currentPoint = [
+              currentPoint[0] + args[i + 4],
+              currentPoint[1] + args[i + 5],
+            ];
+            points.push([...currentPoint]);
           }
           break;
         case 'Z': // Close path
         case 'z': // Close path
           if (points.length > 0) {
-            points.push([...points[0]]); // Return to first point
+            // Only add closing point if it's different from the last point
+            const firstPoint = points[0];
+            const lastPoint = points[points.length - 1];
+            if (
+              firstPoint[0] !== lastPoint[0] ||
+              firstPoint[1] !== lastPoint[1]
+            ) {
+              points.push([...firstPoint]);
+            }
           }
           break;
         default:
@@ -282,6 +393,11 @@ export class ImageTracerService {
       }
     });
 
-    return points;
+    // Remove consecutive duplicate points
+    return points.filter((point, index, array) => {
+      if (index === 0) return true;
+      const prevPoint = array[index - 1];
+      return !(point[0] === prevPoint[0] && point[1] === prevPoint[1]);
+    });
   }
 }
