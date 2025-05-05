@@ -1,0 +1,10 @@
+<div class="editor-container">
+  <h3>GeoJSON Editor</h3>
+  <div class="editor-wrapper">
+    <ngx-monaco-editor
+      [options]="editorOptions"
+      [(ngModel)]="jsonString"
+      (ngModelChange)="onCodeChanged($event)"
+    ></ngx-monaco-editor>
+  </div>
+</div>

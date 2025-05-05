@@ -1,0 +1,16 @@
+.editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1rem;
+
+  h3 {
+    margin-bottom: 1rem;
+  }
+
+  .editor-wrapper {
+    flex: 1;
+    min-height: 300px;
+    border: 1px solid #444;
+  }
+}

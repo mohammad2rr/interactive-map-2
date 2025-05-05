@@ -1,0 +1,37 @@
+<!-- image-uploader.component.html -->
+<div class="uploader-container">
+  <div class="file-selector">
+    <input
+      type="file"
+      accept="image/*"
+      (change)="onFileSelected($event)"
+      #fileInput
+    />
+    <button (click)="fileInput.click()">Select Image</button>
+    <span *ngIf="selectedFile">{{ selectedFile.name }}</span>
+  </div>
+
+  <div class="preview" *ngIf="previewUrl">
+    <img [src]="previewUrl" alt="Selected image preview" />
+  </div>
+
+  <div class="controls">
+    <button (click)="processImage()" [disabled]="!selectedFile || isTracing">
+      {{ isTracing ? "Processing..." : "Convert to Shape" }}
+    </button>
+  </div>
+
+  <div class="options">
+    <label>
+      Threshold:
+      <input
+        type="range"
+        min="0"
+        max="255"
+        [(ngModel)]="traceOptions.threshold"
+      />
+      {{ traceOptions.threshold }}
+    </label>
+    <!-- Add more options as needed -->
+  </div>
+</div>
