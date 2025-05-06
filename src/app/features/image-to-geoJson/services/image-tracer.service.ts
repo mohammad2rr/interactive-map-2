@@ -234,7 +234,7 @@ export class ImageTracerService {
     try {
       const line = turf.lineString(normalized);
       const simplified = turf.simplify(line, {
-        tolerance: 0.0001, // Reduced tolerance for more precise shapes
+        tolerance: 0.00005, // Reduced tolerance for finer simplification
         highQuality: true,
         mutate: false,
       });
@@ -282,16 +282,15 @@ export class ImageTracerService {
       const polygon = turf.polygon([coords]);
       if (!turf.booleanValid(polygon)) {
         const buffered = turf.buffer(turf.lineString(coords), 0.000001, {
-          // Reduced buffer size
           units: 'degrees',
-          steps: 16, // Increased steps for smoother edges
+          steps: 32, // Increased steps for smoother edges
         });
 
         if (!buffered) return null;
 
         const bufferedCoords = buffered.geometry.coordinates[0] as Position[];
         const simplified = turf.simplify(turf.polygon([bufferedCoords]), {
-          tolerance: 0.0001,
+          tolerance: 0.00005,
           highQuality: true,
         });
 
