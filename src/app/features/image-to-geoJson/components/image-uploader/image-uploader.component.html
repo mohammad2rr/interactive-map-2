@@ -1,7 +1,7 @@
 <!-- image-uploader.component.html -->
 <div class="container-fluid p-4">
   <div class="row">
-    <div class="col-12 col-md-4">
+    <div class="col-12 col-md-12">
       <div class="uploader-container">
         <div class="file-selector">
           <input
@@ -10,7 +10,10 @@
             (change)="onFileSelected($event)"
             #fileInput
           />
-          <button class="btn btn-primary d-flex align-items-center gap-2" (click)="fileInput.click()">
+          <button
+            class="btn btn-primary d-flex align-items-center gap-2"
+            (click)="fileInput.click()"
+          >
             <i class="material-icons">upload_file</i>
             <span>Select Image</span>
           </button>
@@ -25,12 +28,14 @@
         </div>
 
         <div class="controls mt-3">
-          <button 
+          <button
             class="btn btn-success w-100 d-flex align-items-center justify-content-center gap-2"
-            (click)="processImage()" 
+            (click)="processImage()"
             [disabled]="!selectedFile || isTracing"
           >
-            <i class="material-icons">{{ isTracing ? 'hourglass_full' : 'transform' }}</i>
+            <i class="material-icons">{{
+              isTracing ? "hourglass_full" : "transform"
+            }}</i>
             <span>{{ isTracing ? "Processing..." : "Convert to Shape" }}</span>
           </button>
         </div>
@@ -52,17 +57,8 @@
       </div>
     </div>
 
-    <div class="col-12 col-md-8">
+    <div class="col-12 col-md-12">
       <div class="row">
-        <!-- GeoJSON Editor -->
-        <div class="col-12 mb-4 editor-container">
-          <div class="editor-header">
-            <i class="material-icons">code</i>
-            <span>GeoJSON Editor</span>
-          </div>
-          <router-outlet></router-outlet>
-        </div>
-
         <!-- Shape Preview -->
         <div class="col-12 preview-container">
           <div class="preview-header">
@@ -70,6 +66,14 @@
             <span>Shape Preview</span>
           </div>
           <router-outlet name="preview"></router-outlet>
+        </div>
+        <!-- GeoJSON Editor -->
+        <div class="col-12 mb-4 editor-container">
+          <div class="editor-header">
+            <i class="material-icons">code</i>
+            <span>GeoJSON Editor</span>
+          </div>
+          <router-outlet></router-outlet>
         </div>
       </div>
     </div>
