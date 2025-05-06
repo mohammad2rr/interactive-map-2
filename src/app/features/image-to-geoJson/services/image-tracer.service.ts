@@ -15,6 +15,9 @@ import { TraceOptions, FeatureProperties, SvgScale } from './interfaces';
 
 interface PotraceOptions extends TraceOptions {
   background?: string | undefined;
+  alphaMax?: number;
+  optCurve?: boolean;
+  optTolerance?: number;
 }
 
 @Injectable({
@@ -185,7 +188,7 @@ export class ImageTracerService {
         return;
       }
 
-      const maxDimension = 1000;
+      const maxDimension = 800; // Reduced for better processing
       const ratio = Math.min(
         maxDimension / img.width,
         maxDimension / img.height
@@ -193,13 +196,19 @@ export class ImageTracerService {
       canvas.width = img.width * ratio;
       canvas.height = img.height * ratio;
 
+      // Use better image smoothing
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
       const traceOptions: PotraceOptions = {
         color: options.color || '#000000',
-        threshold: options.threshold !== undefined ? options.threshold : 120,
-        turdSize: options.turdSize || 10,
-        turnPolicy: options.turnPolicy || 'minority',
+        threshold: options.threshold !== undefined ? options.threshold : 128,
+        turdSize: options.turdSize || 15, // Increased to remove small artifacts
+        alphaMax: 0.5, // Lower alpha max for smoother curves
+        turnPolicy: options.turnPolicy || 'black',
+        optCurve: true,
+        optTolerance: 0.2,
         background: options.background ?? undefined,
       };
 

@@ -2,6 +2,7 @@
   <h3>GeoJSON Editor</h3>
   <div class="editor-wrapper">
     <ngx-monaco-editor
+      class="monaco-editor"
       [options]="editorOptions"
       [(ngModel)]="code"
       (ngModelChange)="onCodeChanged($event)"

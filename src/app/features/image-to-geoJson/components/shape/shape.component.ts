@@ -10,28 +10,39 @@ import { CommonModule } from '@angular/common';
 import * as d3 from 'd3';
 import { Feature, FeatureCollection } from 'geojson';
 import { GeoJsonStateService } from '../../services/geo-json-state.service';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, fromEvent } from 'rxjs';
+import { debounceTime, takeUntil, take } from 'rxjs/operators';
 
 @Component({
   selector: 'app-shape',
-  template: `<div class="shape-container" #shapeContainer></div>`,
+  template: ` <div class="shape-container" #shapeContainer></div> `,
   styles: [
     `
       .shape-container {
         width: 100%;
         height: 100%;
-        background-color: white;
+        background: transparent;
+        overflow: hidden;
+      }
+      .shape-container svg {
+        width: 100%;
+        height: 100%;
+        overflow: visible;
       }
       .shape-container path {
-        transition: fill 0.3s, stroke 0.3s;
+        transition: all 0.2s ease;
+        cursor: pointer;
         pointer-events: all;
+        stroke-linejoin: round;
+        stroke-linecap: round;
+        vector-effect: non-scaling-stroke;
       }
       .shape-container path:hover {
-        opacity: 0.8;
+        filter: brightness(1.2);
       }
       .shape-container path.selected {
-        stroke-width: 2;
-        stroke: #ff6600;
+        stroke-width: 3;
+        filter: brightness(1.3);
       }
     `,
   ],
@@ -40,14 +51,19 @@ import { Subject, takeUntil } from 'rxjs';
 })
 export class ShapeComponent implements OnInit, OnDestroy {
   @ViewChild('shapeContainer') container!: ElementRef;
-
   private destroy$ = new Subject<void>();
-  private svg: any;
-  private projection: any;
-  private pathGenerator: any;
+  private svg!: d3.Selection<SVGSVGElement, unknown, null, undefined>;
+  private projection!: d3.GeoProjection;
+  private pathGenerator!: d3.GeoPath;
+  private selectedElement: d3.Selection<
+    SVGPathElement,
+    Feature,
+    SVGGElement,
+    unknown
+  > | null = null;
 
-  width = 500;
-  height = 500;
+  width = window.innerWidth;
+  height = window.innerHeight;
   interactive = true;
   fillColor = '#cccccc';
   strokeColor = '#333333';
@@ -61,6 +77,19 @@ export class ShapeComponent implements OnInit, OnDestroy {
         if (data) {
           this.drawShape(data as FeatureCollection);
         }
+      });
+
+    // Handle window resize
+    fromEvent(window, 'resize')
+      .pipe(debounceTime(250), takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.width = window.innerWidth;
+        this.height = window.innerHeight;
+        this.geoJsonState.geoJsonData$.pipe(take(1)).subscribe((data) => {
+          if (data) {
+            this.drawShape(data as FeatureCollection);
+          }
+        });
       });
   }
 
@@ -76,28 +105,42 @@ export class ShapeComponent implements OnInit, OnDestroy {
     const container = this.container.nativeElement;
     container.innerHTML = '';
 
+    // Calculate dimensions
+    const containerRect = container.getBoundingClientRect();
+    const width = containerRect.width;
+    const height = containerRect.height;
+
     // Create SVG
     this.svg = d3
       .select(container)
       .append('svg')
-      .attr('width', this.width)
-      .attr('height', this.height)
-      .attr('viewBox', [0, 0, this.width, this.height].join(' '))
-      .style('max-width', '100%')
-      .style('height', 'auto');
+      .attr('width', '100%')
+      .attr('height', '100%')
+      .attr('viewBox', [0, 0, width, height].join(' '))
+      .attr('preserveAspectRatio', 'xMidYMid meet');
 
-    // Set up projection
+    // Set up projection with GeoTransform for 2D mapping
     this.projection = d3
       .geoIdentity()
-      .reflectY(true) // SVG y-axis is top-down, GeoJSON is bottom-up
-      .fitSize([this.width, this.height], geoJsonData);
+      .reflectY(true)
+      .fitSize([width, height], geoJsonData) as unknown as d3.GeoProjection;
 
     // Set up path generator
     this.pathGenerator = d3.geoPath().projection(this.projection);
 
-    // Draw each feature
-    const features = this.svg
-      .selectAll('path')
+    // Create container for shapes with explicit typing
+    const shapesGroup = this.svg
+      .append('g')
+      .attr('class', 'shapes') as d3.Selection<
+      SVGGElement,
+      unknown,
+      null,
+      undefined
+    >;
+
+    // Draw each feature with proper typing
+    const features = shapesGroup
+      .selectAll<SVGPathElement, Feature>('path')
       .data(geoJsonData.features)
       .enter()
       .append('path')
@@ -108,61 +151,115 @@ export class ShapeComponent implements OnInit, OnDestroy {
         (d: Feature) => d.properties?.['stroke'] || this.strokeColor
       )
       .attr('stroke-width', (d: Feature) => d.properties?.['stroke-width'] || 1)
-      .style('vector-effect', 'non-scaling-stroke');
+      .attr('data-id', (d: Feature) => d.properties?.['id']);
 
     if (this.interactive) {
-      this.addInteractivity(features);
+      this.addInteractivity(
+        features as d3.Selection<SVGPathElement, Feature, SVGGElement, unknown>
+      );
     }
   }
 
   private addInteractivity(
-    features: d3.Selection<d3.BaseType, Feature, d3.BaseType, unknown>
+    features: d3.Selection<SVGPathElement, Feature, SVGGElement, unknown>
   ): void {
-    let selectedShape: d3.BaseType | null = null;
-
     features
-      .style('cursor', 'pointer')
       .on('mouseenter', (event: MouseEvent, d: Feature) => {
-        if (event.target !== selectedShape) {
-          d3.select(event.target as Element)
-            .attr('fill', '#ff9900')
-            .attr('stroke', '#cc6600');
+        const target = d3.select(event.target as SVGPathElement);
+        if (!target.classed('selected')) {
+          const originalFill = d.properties?.['fill'] || this.fillColor;
+          const originalStroke = d.properties?.['stroke'] || this.strokeColor;
+          const brighterFill = d3.color(originalFill)?.brighter(0.3);
+          const darkerStroke = d3.color(originalStroke)?.darker(0.3);
+
+          target
+            .transition()
+            .duration(200)
+            .attr('fill', brighterFill?.toString() || originalFill)
+            .attr('stroke', darkerStroke?.toString() || originalStroke);
         }
       })
       .on('mouseleave', (event: MouseEvent, d: Feature) => {
-        if (event.target !== selectedShape) {
-          d3.select(event.target as Element)
+        const target = d3.select(event.target as SVGPathElement);
+        if (!target.classed('selected')) {
+          target
+            .transition()
+            .duration(200)
             .attr('fill', d.properties?.['fill'] || this.fillColor)
             .attr('stroke', d.properties?.['stroke'] || this.strokeColor);
         }
       })
       .on('click', (event: MouseEvent, d: Feature) => {
-        if (selectedShape) {
-          const prevShape = d3.select(selectedShape);
-          prevShape
+        event.stopPropagation();
+        const target = d3.select(event.target as SVGPathElement);
+        const targetSelection = features.filter(
+          (_, i, nodes) => nodes[i] === event.target
+        );
+
+        // Deselect previous
+        if (this.selectedElement) {
+          const prevData = this.selectedElement.datum();
+          this.selectedElement
+            .classed('selected', false)
+            .transition()
+            .duration(200)
+            .attr('fill', prevData.properties?.['fill'] || this.fillColor)
+            .attr('stroke', prevData.properties?.['stroke'] || this.strokeColor)
+            .attr('stroke-width', prevData.properties?.['stroke-width'] || 1);
+        }
+
+        // Select new if different
+        if (
+          !this.selectedElement ||
+          !this.selectedElement.node()?.isSameNode(event.target as Node)
+        ) {
+          this.selectedElement = targetSelection as d3.Selection<
+            SVGPathElement,
+            Feature,
+            SVGGElement,
+            unknown
+          >;
+          const strokeColor = d3
+            .color(d.properties?.['stroke'] || this.strokeColor)
+            ?.darker(0.5);
+          const fillColor = d3
+            .color(d.properties?.['fill'] || this.fillColor)
+            ?.brighter(0.5);
+
+          target
+            .classed('selected', true)
+            .raise()
+            .transition()
+            .duration(200)
             .attr(
               'fill',
-              (prevShape.datum() as Feature).properties?.['fill'] ||
-                this.fillColor
+              fillColor?.toString() || d.properties?.['fill'] || this.fillColor
             )
             .attr(
               'stroke',
-              (prevShape.datum() as Feature).properties?.['stroke'] ||
+              strokeColor?.toString() ||
+                d.properties?.['stroke'] ||
                 this.strokeColor
             )
-            .classed('selected', false);
-        }
-
-        const target = event.target as Element;
-        if (selectedShape !== target) {
-          selectedShape = target;
-          d3.select(target)
-            .attr('fill', '#ff6600')
-            .attr('stroke', '#cc3300')
-            .classed('selected', true);
+            .attr('stroke-width', 3);
         } else {
-          selectedShape = null;
+          this.selectedElement = null;
         }
       });
+
+    // Deselect when clicking outside
+    this.svg.on('click', (event: MouseEvent) => {
+      if (event.target === this.svg.node() && this.selectedElement) {
+        const data = this.selectedElement.datum();
+        this.selectedElement
+          .classed('selected', false)
+          .transition()
+          .duration(200)
+          .attr('fill', data.properties?.['fill'] || this.fillColor)
+          .attr('stroke', data.properties?.['stroke'] || this.strokeColor)
+          .attr('stroke-width', data.properties?.['stroke-width'] || 1);
+        this.selectedElement = null;
+      }
+    });
   }
 }
