@@ -9,14 +9,23 @@ export const imageToGeoJsonRoutes: Routes = [
     component: ImageUploaderComponent,
     children: [
       {
+        path: '',
+        redirectTo: 'editor',
+        pathMatch: 'full',
+      },
+      {
         path: 'editor',
-        component: GeoJsonEditorComponent
+        component: GeoJsonEditorComponent,
+        data: {
+          reuseComponent: true,
+          preload: true,
+        },
       },
       {
         path: 'preview',
         component: ShapeComponent,
-        outlet: 'preview'
-      }
-    ]
-  }
+        outlet: 'preview',
+      },
+    ],
+  },
 ];

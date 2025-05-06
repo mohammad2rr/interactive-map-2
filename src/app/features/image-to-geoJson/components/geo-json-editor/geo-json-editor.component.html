@@ -3,8 +3,10 @@
   <div class="editor-wrapper">
     <ngx-monaco-editor
       [options]="editorOptions"
-      [(ngModel)]="jsonString"
+      [(ngModel)]="code"
       (ngModelChange)="onCodeChanged($event)"
+      (onInit)="onEditorInit($event)"
+      style="height: 400px; width: 100%"
     ></ngx-monaco-editor>
   </div>
 </div>

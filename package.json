@@ -35,8 +35,10 @@
     "ngx-monaco-editor": "^12.0.0",
     "potrace": "^2.1.8",
     "rxjs": "~7.8.0",
+    "svg-path-parser": "^1.1.0",
     "svgson": "^5.3.1",
     "topojson": "^3.0.2",
+    "transform-parser": "^1.0.1",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
   },
@@ -46,6 +48,7 @@
     "@angular/compiler-cli": "^19.2.0",
     "@types/jasmine": "~5.1.0",
     "@types/potrace": "^2.1.5",
+    "@types/svg-path-parser": "^1.1.6",
     "jasmine-core": "~5.6.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",

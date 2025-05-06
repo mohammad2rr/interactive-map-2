@@ -1,4 +1,10 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  AfterViewInit,
+  NgZone,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MonacoEditorModule } from 'ngx-monaco-editor';
 import { GeoJsonStateService } from '../../services/geo-json-state.service';
@@ -9,31 +15,50 @@ import { GeoJSON } from 'geojson';
   selector: 'app-geo-json-editor',
   templateUrl: './geo-json-editor.component.html',
   styleUrls: ['./geo-json-editor.component.scss'],
-  imports: [
-    FormsModule,
-    MonacoEditorModule
-  ],
-  standalone: true
+  standalone: true,
+  imports: [FormsModule, MonacoEditorModule],
 })
-export class GeoJsonEditorComponent implements OnInit, OnDestroy {
+export class GeoJsonEditorComponent
+  implements OnInit, OnDestroy, AfterViewInit
+{
   private destroy$ = new Subject<void>();
   geoJsonData: GeoJSON | null = null;
+  code: string = '';
+  isEditorReady = false;
 
   editorOptions = {
     theme: 'vs-dark',
     language: 'json',
     automaticLayout: true,
     minimap: { enabled: false },
+    scrollBeyondLastLine: false,
+    formatOnPaste: true,
+    formatOnType: true,
   };
 
-  constructor(private geoJsonState: GeoJsonStateService) {}
+  constructor(
+    private geoJsonState: GeoJsonStateService,
+    private ngZone: NgZone
+  ) {}
 
   ngOnInit(): void {
     this.geoJsonState.geoJsonData$
       .pipe(takeUntil(this.destroy$))
-      .subscribe(data => {
+      .subscribe((data) => {
         this.geoJsonData = data;
+        if (this.isEditorReady) {
+          this.ngZone.run(() => {
+            this.code = JSON.stringify(data, null, 2) || '';
+          });
+        }
       });
+  }
+
+  ngAfterViewInit(): void {
+    this.isEditorReady = true;
+    if (this.geoJsonData) {
+      this.code = JSON.stringify(this.geoJsonData, null, 2);
+    }
   }
 
   ngOnDestroy(): void {
@@ -41,16 +66,19 @@ export class GeoJsonEditorComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  get jsonString(): string {
-    return JSON.stringify(this.geoJsonData, null, 2);
-  }
-
   onCodeChanged(value: string): void {
     try {
       const parsed = JSON.parse(value) as GeoJSON;
       this.geoJsonState.updateGeoJsonData(parsed);
     } catch (e) {
-      console.error('Invalid JSON', e);
+      console.error('Invalid JSON:', e);
+    }
+  }
+
+  onEditorInit(editor: any): void {
+    this.isEditorReady = true;
+    if (this.geoJsonData) {
+      this.code = JSON.stringify(this.geoJsonData, null, 2);
     }
   }
 }
