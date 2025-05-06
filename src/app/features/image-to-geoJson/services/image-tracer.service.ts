@@ -36,24 +36,36 @@ export class ImageTracerService {
 
       reader.onload = async (event) => {
         try {
-          const img = new Image();
-          img.onload = async () => {
-            try {
-              const svg = await this.traceImageToSvg(img, options);
-              const geoJson = await this.convertSvgToGeoJson(svg);
-              resolve(geoJson);
-            } catch (error) {
-              reject(error);
-            }
-          };
-          img.src = event.target?.result as string;
+          // Check if the file is SVG
+          if (file.type === 'image/svg+xml') {
+            const svgContent = event.target?.result as string;
+            const geoJson = await this.convertSvgToGeoJson(svgContent);
+            resolve(geoJson);
+          } else {
+            // Handle other image types with tracing
+            const img = new Image();
+            img.onload = async () => {
+              try {
+                const svg = await this.traceImageToSvg(img, options);
+                const geoJson = await this.convertSvgToGeoJson(svg);
+                resolve(geoJson);
+              } catch (error) {
+                reject(error);
+              }
+            };
+            img.src = event.target?.result as string;
+          }
         } catch (error) {
           reject(error);
         }
       };
 
       reader.onerror = () => reject(reader.error);
-      reader.readAsDataURL(file);
+      if (file.type === 'image/svg+xml') {
+        reader.readAsText(file);
+      } else {
+        reader.readAsDataURL(file);
+      }
     });
   }
 
@@ -268,6 +280,7 @@ export class ImageTracerService {
     const commands = pathData.split(/(?=[A-Za-z])/);
     const points: [number, number][] = [];
     let currentPoint: [number, number] = [0, 0];
+    let firstPoint: [number, number] = [0, 0];
 
     commands.forEach((cmd) => {
       const type = cmd[0];
@@ -279,19 +292,131 @@ export class ImageTracerService {
 
       switch (type) {
         case 'M': // Move to (absolute)
+          currentPoint = [args[0], args[1]];
+          firstPoint = [...currentPoint];
+          points.push([...currentPoint]);
+          // Handle subsequent pairs as line commands
+          for (let i = 2; i < args.length; i += 2) {
+            currentPoint = [args[i], args[i + 1]];
+            points.push([...currentPoint]);
+          }
+          break;
+
+        case 'm': // Move to (relative)
+          currentPoint = [currentPoint[0] + args[0], currentPoint[1] + args[1]];
+          firstPoint = [...currentPoint];
+          points.push([...currentPoint]);
+          // Handle subsequent pairs as line commands
+          for (let i = 2; i < args.length; i += 2) {
+            currentPoint = [
+              currentPoint[0] + args[i],
+              currentPoint[1] + args[i + 1]
+            ];
+            points.push([...currentPoint]);
+          }
+          break;
+
         case 'L': // Line to (absolute)
           for (let i = 0; i < args.length; i += 2) {
             currentPoint = [args[i], args[i + 1]];
             points.push([...currentPoint]);
           }
           break;
-        case 'Z': // Close path
-          if (points.length > 0) {
-            points.push([...points[0]]);
+
+        case 'l': // Line to (relative)
+          for (let i = 0; i < args.length; i += 2) {
+            currentPoint = [
+              currentPoint[0] + args[i],
+              currentPoint[1] + args[i + 1]
+            ];
+            points.push([...currentPoint]);
           }
           break;
+
+        case 'H': // Horizontal line (absolute)
+          currentPoint = [args[0], currentPoint[1]];
+          points.push([...currentPoint]);
+          break;
+
+        case 'h': // Horizontal line (relative)
+          currentPoint = [currentPoint[0] + args[0], currentPoint[1]];
+          points.push([...currentPoint]);
+          break;
+
+        case 'V': // Vertical line (absolute)
+          currentPoint = [currentPoint[0], args[0]];
+          points.push([...currentPoint]);
+          break;
+
+        case 'v': // Vertical line (relative)
+          currentPoint = [currentPoint[0], currentPoint[1] + args[0]];
+          points.push([...currentPoint]);
+          break;
+
+        case 'Z':
+        case 'z': // Close path
+          if (points.length > 0 && firstPoint) {
+            currentPoint = [...firstPoint];
+            points.push([...firstPoint]);
+          }
+          break;
+
+        case 'C': // Cubic Bezier (absolute)
+          for (let i = 0; i < args.length; i += 6) {
+            // Add several points along the curve for better approximation
+            const steps = 10;
+            for (let t = 0; t <= steps; t++) {
+              const progress = t / steps;
+              const x = this.bezierPoint(
+                currentPoint[0],
+                args[i],
+                args[i + 2],
+                args[i + 4],
+                progress
+              );
+              const y = this.bezierPoint(
+                currentPoint[1],
+                args[i + 1],
+                args[i + 3],
+                args[i + 5],
+                progress
+              );
+              if (t > 0) points.push([x, y]);
+            }
+            currentPoint = [args[i + 4], args[i + 5]];
+          }
+          break;
+
+        case 'c': // Cubic Bezier (relative)
+          for (let i = 0; i < args.length; i += 6) {
+            const steps = 10;
+            for (let t = 0; t <= steps; t++) {
+              const progress = t / steps;
+              const x = this.bezierPoint(
+                currentPoint[0],
+                currentPoint[0] + args[i],
+                currentPoint[0] + args[i + 2],
+                currentPoint[0] + args[i + 4],
+                progress
+              );
+              const y = this.bezierPoint(
+                currentPoint[1],
+                currentPoint[1] + args[i + 1],
+                currentPoint[1] + args[i + 3],
+                currentPoint[1] + args[i + 5],
+                progress
+              );
+              if (t > 0) points.push([x, y]);
+            }
+            currentPoint = [
+              currentPoint[0] + args[i + 4],
+              currentPoint[1] + args[i + 5]
+            ];
+          }
+          break;
+
         default:
-          console.warn(`Unsupported SVG path command: ${type}`);
+          console.warn(`Skipping unsupported SVG path command: ${type}`);
       }
     });
 
@@ -300,5 +425,21 @@ export class ImageTracerService {
       const prevPoint = array[index - 1];
       return !(point[0] === prevPoint[0] && point[1] === prevPoint[1]);
     });
+  }
+
+  private bezierPoint(
+    p0: number,
+    p1: number,
+    p2: number,
+    p3: number,
+    t: number
+  ): number {
+    const mt = 1 - t;
+    return (
+      mt * mt * mt * p0 +
+      3 * mt * mt * t * p1 +
+      3 * mt * t * t * p2 +
+      t * t * t * p3
+    );
   }
 }
