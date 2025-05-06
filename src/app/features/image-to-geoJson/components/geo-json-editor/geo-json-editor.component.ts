@@ -34,6 +34,17 @@ export class GeoJsonEditorComponent
     scrollBeyondLastLine: false,
     formatOnPaste: true,
     formatOnType: true,
+    folding: true,
+    lineNumbers: 'on',
+    roundedSelection: true,
+    readOnly: false,
+    fontSize: 14,
+    wordWrap: 'on',
+    renderWhitespace: 'none',
+    scrollbar: {
+      vertical: 'auto',
+      horizontal: 'auto',
+    },
   };
 
   constructor(
@@ -46,7 +57,7 @@ export class GeoJsonEditorComponent
       .pipe(takeUntil(this.destroy$))
       .subscribe((data) => {
         this.geoJsonData = data;
-        if (this.isEditorReady) {
+        if (this.isEditorReady && data) {
           this.ngZone.run(() => {
             this.code = JSON.stringify(data, null, 2) || '';
           });
@@ -77,8 +88,14 @@ export class GeoJsonEditorComponent
 
   onEditorInit(editor: any): void {
     this.isEditorReady = true;
+    editor.getModel()?.updateOptions({ tabSize: 2 });
+    editor.layout();
+
     if (this.geoJsonData) {
       this.code = JSON.stringify(this.geoJsonData, null, 2);
+      setTimeout(() => {
+        editor.getAction('editor.action.formatDocument').run();
+      }, 100);
     }
   }
 }

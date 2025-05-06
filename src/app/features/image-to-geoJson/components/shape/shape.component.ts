@@ -20,14 +20,23 @@ import { Subject, takeUntil } from 'rxjs';
       .shape-container {
         width: 100%;
         height: 100%;
+        background-color: white;
       }
       .shape-container path {
         transition: fill 0.3s, stroke 0.3s;
+        pointer-events: all;
+      }
+      .shape-container path:hover {
+        opacity: 0.8;
+      }
+      .shape-container path.selected {
+        stroke-width: 2;
+        stroke: #ff6600;
       }
     `,
   ],
   standalone: true,
-  imports: [CommonModule]
+  imports: [CommonModule],
 })
 export class ShapeComponent implements OnInit, OnDestroy {
   @ViewChild('shapeContainer') container!: ElementRef;
@@ -36,7 +45,7 @@ export class ShapeComponent implements OnInit, OnDestroy {
   private svg: any;
   private projection: any;
   private pathGenerator: any;
-  
+
   width = 500;
   height = 500;
   interactive = true;
@@ -48,7 +57,7 @@ export class ShapeComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.geoJsonState.geoJsonData$
       .pipe(takeUntil(this.destroy$))
-      .subscribe(data => {
+      .subscribe((data) => {
         if (data) {
           this.drawShape(data as FeatureCollection);
         }
@@ -72,7 +81,10 @@ export class ShapeComponent implements OnInit, OnDestroy {
       .select(container)
       .append('svg')
       .attr('width', this.width)
-      .attr('height', this.height);
+      .attr('height', this.height)
+      .attr('viewBox', [0, 0, this.width, this.height].join(' '))
+      .style('max-width', '100%')
+      .style('height', 'auto');
 
     // Set up projection
     this.projection = d3
@@ -91,26 +103,66 @@ export class ShapeComponent implements OnInit, OnDestroy {
       .append('path')
       .attr('d', (d: Feature) => this.pathGenerator(d))
       .attr('fill', (d: Feature) => d.properties?.['fill'] || this.fillColor)
-      .attr('stroke', (d: Feature) => d.properties?.['stroke'] || this.strokeColor)
-      .attr('stroke-width', (d: Feature) => d.properties?.['stroke-width'] || 1);
+      .attr(
+        'stroke',
+        (d: Feature) => d.properties?.['stroke'] || this.strokeColor
+      )
+      .attr('stroke-width', (d: Feature) => d.properties?.['stroke-width'] || 1)
+      .style('vector-effect', 'non-scaling-stroke');
 
     if (this.interactive) {
       this.addInteractivity(features);
     }
   }
 
-  private addInteractivity(features: d3.Selection<d3.BaseType, Feature, d3.BaseType, unknown>): void {
+  private addInteractivity(
+    features: d3.Selection<d3.BaseType, Feature, d3.BaseType, unknown>
+  ): void {
+    let selectedShape: d3.BaseType | null = null;
+
     features
       .style('cursor', 'pointer')
       .on('mouseenter', (event: MouseEvent, d: Feature) => {
-        d3.select(event.target as Element)
-          .attr('fill', '#ff9900')
-          .attr('stroke', '#cc6600');
+        if (event.target !== selectedShape) {
+          d3.select(event.target as Element)
+            .attr('fill', '#ff9900')
+            .attr('stroke', '#cc6600');
+        }
       })
       .on('mouseleave', (event: MouseEvent, d: Feature) => {
-        d3.select(event.target as Element)
-          .attr('fill', d.properties?.['fill'] || this.fillColor)
-          .attr('stroke', d.properties?.['stroke'] || this.strokeColor);
+        if (event.target !== selectedShape) {
+          d3.select(event.target as Element)
+            .attr('fill', d.properties?.['fill'] || this.fillColor)
+            .attr('stroke', d.properties?.['stroke'] || this.strokeColor);
+        }
+      })
+      .on('click', (event: MouseEvent, d: Feature) => {
+        if (selectedShape) {
+          const prevShape = d3.select(selectedShape);
+          prevShape
+            .attr(
+              'fill',
+              (prevShape.datum() as Feature).properties?.['fill'] ||
+                this.fillColor
+            )
+            .attr(
+              'stroke',
+              (prevShape.datum() as Feature).properties?.['stroke'] ||
+                this.strokeColor
+            )
+            .classed('selected', false);
+        }
+
+        const target = event.target as Element;
+        if (selectedShape !== target) {
+          selectedShape = target;
+          d3.select(target)
+            .attr('fill', '#ff6600')
+            .attr('stroke', '#cc3300')
+            .classed('selected', true);
+        } else {
+          selectedShape = null;
+        }
       });
   }
 }
