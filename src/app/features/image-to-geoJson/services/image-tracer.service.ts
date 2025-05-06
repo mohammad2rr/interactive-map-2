@@ -69,8 +69,7 @@ export class ImageTracerService {
         return;
       }
 
-      // Set canvas dimensions
-      const maxDimension = 1000; // To prevent huge files
+      const maxDimension = 1000;
       const ratio = Math.min(
         maxDimension / img.width,
         maxDimension / img.height
@@ -78,7 +77,6 @@ export class ImageTracerService {
       canvas.width = img.width * ratio;
       canvas.height = img.height * ratio;
 
-      // Draw image to canvas
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
       const traceOptions: PotraceOptions = {
@@ -89,7 +87,6 @@ export class ImageTracerService {
         background: options.background || undefined,
       };
 
-      // Convert canvas to data URL and trace
       const imageDataUrl = canvas.toDataURL('image/png');
       potrace.trace(
         imageDataUrl,
@@ -106,7 +103,6 @@ export class ImageTracerService {
   }
 
   private normalizeCoordinates(coords: [number, number][]): [number, number][] {
-    // Filter out points that are too close together
     const minDistance = 0.00001;
     const normalized = coords.filter((point, index, array) => {
       if (index === 0) return true;
@@ -117,19 +113,14 @@ export class ImageTracerService {
       return distance > minDistance;
     });
 
-    // Ensure we have enough points
-    if (normalized.length < 3) {
-      return [];
-    }
+    if (normalized.length < 3) return [];
 
-    // Check if the polygon is closed
     const first = normalized[0];
     const last = normalized[normalized.length - 1];
     const distance = Math.sqrt(
       Math.pow(first[0] - last[0], 2) + Math.pow(first[1] - last[1], 2)
     );
 
-    // Close the polygon if needed
     if (distance > minDistance) {
       normalized.push([...first]);
     }
@@ -163,17 +154,11 @@ export class ImageTracerService {
     coords: [number, number][]
   ): Feature<Polygon> | null {
     try {
-      // Check if we have enough points
-      if (coords.length < 4) {
-        return null;
-      }
+      if (coords.length < 4) return null;
 
-      // Create polygon with single ring
       const polygon = turf.polygon([coords]);
 
-      // Validate the polygon
       if (!turf.booleanValid(polygon)) {
-        // Try to fix using buffer technique
         const buffered = turf.buffer(turf.lineString(coords), 0.00001, {
           units: 'degrees',
           steps: 8,
@@ -181,42 +166,37 @@ export class ImageTracerService {
 
         if (!buffered) return null;
 
-        // Get the largest polygon if multiple were created
-        const polys = turf.explode(buffered);
-        const hull = turf.convex(polys);
+        const bufferedCoords = buffered.geometry.coordinates[0] as Position[];
+        const largestPolygon = turf.polygon([bufferedCoords]);
 
-        if (hull && turf.booleanValid(hull)) {
-          return hull;
-        }
-      } else {
-        return polygon;
+        return largestPolygon;
       }
+
+      return polygon;
     } catch (error) {
       console.warn('Error creating polygon:', error);
+      return null;
     }
-    return null;
   }
 
   private async convertSvgToGeoJson(svg: string): Promise<GeoJSON> {
     const svgJson = await svgson.parse(svg);
     const paths = this.extractPaths(svgJson);
 
+    console.log('Extracted paths:', paths);
+
     const features = paths
       .map((path, index) => {
         try {
-          // Get coordinates from SVG path
           const coordinates = this.parseSvgPath(path.d);
           if (!coordinates || coordinates.length < 3) return null;
 
-          // Clean and normalize coordinates
           const cleanedCoords = this.cleanCoordinates(coordinates);
           if (cleanedCoords.length < 4) return null;
 
-          // Create valid polygon
           const polygon = this.createValidPolygon(cleanedCoords);
           if (!polygon) return null;
 
-          // Return feature with properties
           return {
             type: 'Feature',
             properties: {
@@ -237,7 +217,6 @@ export class ImageTracerService {
           feature !== null
       );
 
-    // Add detailed error logging when no valid features are created
     if (features.length === 0) {
       console.error(
         'SVG paths could not be converted to valid GeoJSON features. Paths:',
@@ -296,93 +275,19 @@ export class ImageTracerService {
         .slice(1)
         .trim()
         .split(/[\s,]+/)
-        .filter((s) => s !== '')
         .map(parseFloat);
 
       switch (type) {
         case 'M': // Move to (absolute)
-          for (let i = 0; i < args.length; i += 2) {
-            currentPoint = [args[i], args[i + 1]];
-            points.push([...currentPoint]);
-          }
-          break;
-        case 'm': // Move to (relative)
-          for (let i = 0; i < args.length; i += 2) {
-            currentPoint = [
-              currentPoint[0] + args[i],
-              currentPoint[1] + args[i + 1],
-            ];
-            points.push([...currentPoint]);
-          }
-          break;
         case 'L': // Line to (absolute)
           for (let i = 0; i < args.length; i += 2) {
             currentPoint = [args[i], args[i + 1]];
             points.push([...currentPoint]);
           }
           break;
-        case 'l': // Line to (relative)
-          for (let i = 0; i < args.length; i += 2) {
-            currentPoint = [
-              currentPoint[0] + args[i],
-              currentPoint[1] + args[i + 1],
-            ];
-            points.push([...currentPoint]);
-          }
-          break;
-        case 'H': // Horizontal line to (absolute)
-          for (let i = 0; i < args.length; i++) {
-            currentPoint = [args[i], currentPoint[1]];
-            points.push([...currentPoint]);
-          }
-          break;
-        case 'h': // Horizontal line to (relative)
-          for (let i = 0; i < args.length; i++) {
-            currentPoint = [currentPoint[0] + args[i], currentPoint[1]];
-            points.push([...currentPoint]);
-          }
-          break;
-        case 'V': // Vertical line to (absolute)
-          for (let i = 0; i < args.length; i++) {
-            currentPoint = [currentPoint[0], args[i]];
-            points.push([...currentPoint]);
-          }
-          break;
-        case 'v': // Vertical line to (relative)
-          for (let i = 0; i < args.length; i++) {
-            currentPoint = [currentPoint[0], currentPoint[1] + args[i]];
-            points.push([...currentPoint]);
-          }
-          break;
-        case 'C': // Cubic Bezier curve (absolute)
-          for (let i = 0; i < args.length; i += 6) {
-            // Add the end point of the curve
-            currentPoint = [args[i + 4], args[i + 5]];
-            points.push([...currentPoint]);
-          }
-          break;
-        case 'c': // Cubic Bezier curve (relative)
-          for (let i = 0; i < args.length; i += 6) {
-            // Add the end point of the curve
-            currentPoint = [
-              currentPoint[0] + args[i + 4],
-              currentPoint[1] + args[i + 5],
-            ];
-            points.push([...currentPoint]);
-          }
-          break;
         case 'Z': // Close path
-        case 'z': // Close path
           if (points.length > 0) {
-            // Only add closing point if it's different from the last point
-            const firstPoint = points[0];
-            const lastPoint = points[points.length - 1];
-            if (
-              firstPoint[0] !== lastPoint[0] ||
-              firstPoint[1] !== lastPoint[1]
-            ) {
-              points.push([...firstPoint]);
-            }
+            points.push([...points[0]]);
           }
           break;
         default:
@@ -390,7 +295,6 @@ export class ImageTracerService {
       }
     });
 
-    // Remove consecutive duplicate points
     return points.filter((point, index, array) => {
       if (index === 0) return true;
       const prevPoint = array[index - 1];

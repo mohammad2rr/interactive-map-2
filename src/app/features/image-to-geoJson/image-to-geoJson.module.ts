@@ -3,7 +3,6 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
-import { MonacoEditorModule } from 'ngx-monaco-editor';
 import { RouterModule } from '@angular/router';
 
 import { ImageUploaderComponent } from './components/image-uploader/image-uploader.component';
@@ -19,7 +18,6 @@ import { imageToGeoJsonRoutes } from './image-to-geoJson.routes';
     FormsModule,
     ReactiveFormsModule,
     HttpClientModule,
-    MonacoEditorModule.forRoot(),
     RouterModule.forChild(imageToGeoJsonRoutes),
     ImageUploaderComponent,
     GeoJsonEditorComponent,
