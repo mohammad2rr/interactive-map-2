@@ -223,7 +223,7 @@ export const routes: Routes = [
         title: 'Map Management',
       },
       {
-        path: 'image-to-geojson',
+        path: 'image-to-json',
         loadChildren: () =>
           import('./features/image-to-geoJson/image-to-geoJson.module').then(
             (m) => m.ImageToGeoJsonModule
