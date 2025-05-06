@@ -80,7 +80,7 @@ export class ImageTracerService {
       x: viewBox ? width / (viewBox[2] - viewBox[0]) : 1,
       y: viewBox ? height / (viewBox[3] - viewBox[1]) : 1,
       offsetX: viewBox ? -viewBox[0] : 0,
-      offsetY: viewBox ? -viewBox[1] : 0,
+      offsetY: viewBox ? viewBox[3] : height, // Changed to flip coordinates
     };
 
     // Find all paths in the SVG
@@ -97,13 +97,13 @@ export class ImageTracerService {
           const coordinates = this.parseSvgPath(d);
           if (!coordinates || coordinates.length < 3) return null;
 
-          // Apply scale and transformations
+          // Apply scale and transformations with y-coordinate flipped
           const scaledCoords = coordinates.map(
             ([x, y]) =>
-              [x * scale.x + scale.offsetX, y * scale.y + scale.offsetY] as [
-                number,
-                number
-              ]
+              [
+                x * scale.x + scale.offsetX,
+                scale.offsetY - y * scale.y, // Flip the y-coordinate
+              ] as [number, number]
           );
 
           // Clean up the coordinates
