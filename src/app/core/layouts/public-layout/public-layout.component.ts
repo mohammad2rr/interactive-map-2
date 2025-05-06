@@ -78,6 +78,14 @@ import { CommonModule } from '@angular/common';
                 <li class="nav-item">
                   <a
                     class="nav-link px-3 py-2 rounded-3"
+                    routerLink="/admin/image-to-json"
+                    routerLinkActive="active"
+                    >Image to JSON</a
+                  >
+                </li>
+                <li class="nav-item">
+                  <a
+                    class="nav-link px-3 py-2 rounded-3"
                     routerLink="/user/dashboard"
                     routerLinkActive="active"
                     >User</a
@@ -159,6 +167,7 @@ import { CommonModule } from '@angular/common';
               <span class="icon">🏠</span>
               <span>Main Page</span>
             </a>
+
             <a
               class="modern-nav-link"
               routerLink="/blog"
@@ -207,6 +216,16 @@ import { CommonModule } from '@angular/common';
               <span class="icon">👑</span>
               <span>Admin</span>
             </a>
+            <!-- <a
+              class="modern-nav-link"
+              routerLink="/admin/image-to-json"
+              routerLinkActive="active"
+              [class.text-light]="themeService.isDarkMode()"
+              [class.text-dark]="!themeService.isDarkMode()"
+            >
+              <span class="icon">🖼️</span>
+              <span>Image to JSON</span>
+            </a> -->
             <a
               class="modern-nav-link"
               routerLink="/user/dashboard"
