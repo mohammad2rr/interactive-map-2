@@ -240,13 +240,11 @@ export class ImageTracerService {
     if (points.length < 3) return points;
 
     const cleaned: [number, number][] = [];
-    const minDistance = 0.5; // Further reduced for better detail
-    const angleThreshold = 0.05; // More sensitive angle detection
+    const minDistance = 0.3; // Reduced for better detail
+    const angleThreshold = 0.03; // More sensitive angle detection
 
-    // Keep first point
     cleaned.push(points[0]);
 
-    // Enhanced adaptive point filtering
     for (let i = 1; i < points.length - 1; i++) {
       const prev = cleaned[cleaned.length - 1];
       const curr = points[i];
@@ -255,7 +253,6 @@ export class ImageTracerService {
       const d1 = this.getDistance(curr, prev);
       const d2 = this.getDistance(next, curr);
 
-      // Calculate local curvature with improved precision
       const angle = Math.abs(
         Math.atan2(next[1] - curr[1], next[0] - curr[0]) -
           Math.atan2(curr[1] - prev[1], curr[0] - prev[0])
@@ -264,8 +261,8 @@ export class ImageTracerService {
       // Enhanced point selection criteria
       const isSignificantCurve = angle > angleThreshold;
       const isDetailPoint =
-        d1 < minDistance * 3 &&
-        d2 < minDistance * 3 &&
+        d1 < minDistance * 2 &&
+        d2 < minDistance * 2 &&
         angle > angleThreshold / 2;
       const isLongSegment = d1 > minDistance || d2 > minDistance;
       const isEndPoint = i === points.length - 2;
@@ -275,19 +272,19 @@ export class ImageTracerService {
       }
     }
 
-    // Improved path closure handling
     const last = points[points.length - 1];
     const distanceToFirst = this.getDistance(last, cleaned[0]);
 
-    if (distanceToFirst > minDistance / 4) {
+    if (distanceToFirst > minDistance / 3) {
       cleaned.push(last);
     }
 
+    // Ensure proper closure
     if (
       !this.pointsMatch(
         cleaned[0],
         cleaned[cleaned.length - 1],
-        minDistance / 4
+        minDistance / 3
       )
     ) {
       cleaned.push([...cleaned[0]]);
@@ -310,7 +307,9 @@ export class ImageTracerService {
     );
   }
 
-  private createValidPolygon(coords: [number, number][]): Feature<Polygon> | null {
+  private createValidPolygon(
+    coords: [number, number][]
+  ): Feature<Polygon> | null {
     try {
       if (coords.length < 4) return null;
 
@@ -321,13 +320,13 @@ export class ImageTracerService {
         // Refined multi-pass simplification with gentler tolerances
         let simplified = turf.simplify(polygon, {
           tolerance: 0.0004, // Reduced tolerance
-          highQuality: true
+          highQuality: true,
         });
 
         // Final refinement pass
         simplified = turf.simplify(simplified, {
           tolerance: 0.0002,
-          highQuality: true
+          highQuality: true,
         });
 
         return this.smoothPolygon(simplified);
@@ -335,9 +334,10 @@ export class ImageTracerService {
 
       // Enhanced polygon repair for invalid shapes
       const line = turf.lineString(coords);
-      const buffered = turf.buffer(line, 0.0000001, { // Reduced buffer size
+      const buffered = turf.buffer(line, 0.0000001, {
+        // Reduced buffer size
         units: 'degrees',
-        steps: 360 // Increased steps for smoother edges
+        steps: 360, // Increased steps for smoother edges
       });
 
       if (!buffered) return null;
@@ -352,7 +352,7 @@ export class ImageTracerService {
         const area = Math.abs(turf.area(polygonFeature));
         const perimeter = turf.length(turf.lineString(poly as Position[]));
         const score = (4 * Math.PI * area) / (perimeter * perimeter);
-        
+
         if (score > bestScore) {
           bestScore = score;
           bestPolygon = poly as Position[];
@@ -364,7 +364,7 @@ export class ImageTracerService {
       let final = turf.polygon([bestPolygon]);
       final = turf.simplify(final, {
         tolerance: 0.00002, // Further reduced tolerance
-        highQuality: true
+        highQuality: true,
       });
 
       return this.smoothPolygon(final);
@@ -412,16 +412,17 @@ export class ImageTracerService {
         this.ctx = this.canvas.getContext('2d')!;
       }
 
+      // Set canvas size to match image
       this.canvas.width = img.width;
       this.canvas.height = img.height;
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-      // Enhanced image preprocessing
+      // Enhanced image preprocessing pipeline
       this.ctx.fillStyle = '#ffffff';
       this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-      // Multi-stage image processing for better edge detection
-      this.ctx.filter = 'contrast(200%) brightness(110%) saturate(130%)';
+      // Advanced multi-stage image processing
+      this.ctx.filter = 'contrast(150%) brightness(105%) saturate(120%)';
       this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
       this.ctx.filter = 'none';
 
@@ -433,19 +434,19 @@ export class ImageTracerService {
       );
       const { data: pixels, width, height } = imageData;
 
-      // Convert to grayscale with improved weights
+      // Enhanced grayscale conversion with better color weighting
       for (let i = 0; i < pixels.length; i += 4) {
         const r = pixels[i];
         const g = pixels[i + 1];
         const b = pixels[i + 2];
-        // Enhanced grayscale conversion with better color weighting
+        // Using improved color weights for better detail preservation
         const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
         pixels[i] = pixels[i + 1] = pixels[i + 2] = gray;
       }
 
-      // Apply adaptive thresholding
-      const blockSize = 15;
-      const C = 5;
+      // Improved adaptive thresholding
+      const blockSize = 11; // Reduced block size for finer detail
+      const C = 3; // Reduced constant for more sensitivity
 
       for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
@@ -453,14 +454,16 @@ export class ImageTracerService {
           let sum = 0;
           let count = 0;
 
-          // Calculate local mean
+          // Calculate local mean with weighted sampling
           for (let dy = -blockSize; dy <= blockSize; dy++) {
             for (let dx = -blockSize; dx <= blockSize; dx++) {
               const ny = y + dy;
               const nx = x + dx;
               if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
-                sum += pixels[(ny * width + nx) * 4];
-                count++;
+                // Weight samples based on distance
+                const weight = 1 / (1 + Math.sqrt(dx * dx + dy * dy));
+                sum += pixels[(ny * width + nx) * 4] * weight;
+                count += weight;
               }
             }
           }
@@ -480,8 +483,8 @@ export class ImageTracerService {
         color: options.color || '#000000',
         background: '#ffffff',
         threshold: options.threshold !== undefined ? options.threshold : 128,
-        turdSize: options.turdSize || 2,
-        alphaMax: 0.15,
+        turdSize: options.turdSize || 2, // Reduced for better detail
+        alphaMax: 0.1, // Reduced for smoother curves
         turnPolicy: 'black',
         optCurve: true,
         optTolerance: 0.1,
