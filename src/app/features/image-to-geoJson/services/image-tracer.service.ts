@@ -168,7 +168,7 @@ export class ImageTracerService {
 
     const length = path.getTotalLength();
     const points: [number, number][] = [];
-    const numPoints = Math.max(100, Math.ceil(length / 2));
+    const numPoints = Math.max(200, Math.ceil(length / 1.5)); // Increased sampling density
 
     for (let i = 0; i <= numPoints; i++) {
       const point = path.getPointAtLength((i / numPoints) * length);
@@ -179,15 +179,32 @@ export class ImageTracerService {
   }
 
   private cleanPoints(points: [number, number][]): [number, number][] {
-    const minDistance = 0.00001;
-    return points.filter((point, index, array) => {
-      if (index === 0) return true;
-      const prev = array[index - 1];
-      const distance = Math.sqrt(
-        Math.pow(point[0] - prev[0], 2) + Math.pow(point[1] - prev[1], 2)
-      );
-      return distance > minDistance;
-    });
+    const minDistance = 0.001; // Further increased minimum distance for aggressive filtering
+    const cleaned: [number, number][] = [];
+
+    for (let i = 0; i < points.length; i++) {
+      const [x, y] = points[i];
+      if (
+        cleaned.length === 0 ||
+        Math.sqrt(
+          Math.pow(x - cleaned[cleaned.length - 1][0], 2) +
+          Math.pow(y - cleaned[cleaned.length - 1][1], 2)
+        ) > minDistance
+      ) {
+        cleaned.push([x, y]);
+      }
+    }
+
+    // Ensure the path is closed if it represents a polygon
+    if (
+      cleaned.length > 2 &&
+      (cleaned[0][0] !== cleaned[cleaned.length - 1][0] ||
+        cleaned[0][1] !== cleaned[cleaned.length - 1][1])
+    ) {
+      cleaned.push([...cleaned[0]]);
+    }
+
+    return cleaned;
   }
 
   private traceImageToSvg(
