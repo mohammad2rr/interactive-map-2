@@ -67,30 +67,30 @@ import { CommonModule } from '@angular/common';
                     >About</a
                   >
                 </li>
-                <li class="nav-item">
+                <!-- <li class="nav-item">
                   <a
                     class="nav-link px-3 py-2 rounded-3"
                     routerLink="/admin/dashboard"
                     routerLinkActive="active"
                     >Admin</a
                   >
-                </li>
-                <li class="nav-item">
+                </li> -->
+                <!-- <li class="nav-item">
                   <a
                     class="nav-link px-3 py-2 rounded-3"
                     routerLink="/admin/image-to-json"
                     routerLinkActive="active"
                     >Image to JSON</a
                   >
-                </li>
-                <li class="nav-item">
+                </li> -->
+                <!-- <li class="nav-item">
                   <a
                     class="nav-link px-3 py-2 rounded-3"
                     routerLink="/user/dashboard"
                     routerLinkActive="active"
                     >User</a
                   >
-                </li>
+                </li> -->
               </ul>
               <div class="d-flex gap-2">
                 <button

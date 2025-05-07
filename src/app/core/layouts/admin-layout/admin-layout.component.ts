@@ -89,6 +89,16 @@ import { CommonModule } from '@angular/common';
             </a>
             <a
               class="modern-nav-link"
+              routerLink="/admin/image-to-json"
+              routerLinkActive="active"
+              [class.text-light]="themeService.isDarkMode()"
+              [class.text-dark]="!themeService.isDarkMode()"
+            >
+              <span class="icon">🖼️</span>
+              <span class="d-none d-md-inline">Image to GeoJSON</span>
+            </a>
+            <a
+              class="modern-nav-link"
               routerLink="/admin/users"
               routerLinkActive="active"
               [routerLinkActiveOptions]="{ exact: false }"
