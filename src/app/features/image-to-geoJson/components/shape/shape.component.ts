@@ -20,7 +20,9 @@ interface GeoJsonFeatureProperties {
   'stroke-width': number;
 }
 
-type GeoIdentityProjection = d3.GeoProjection & { reflectY: (reflect: boolean) => GeoIdentityProjection };
+type GeoIdentityProjection = d3.GeoProjection & {
+  reflectY: (reflect: boolean) => GeoIdentityProjection;
+};
 
 @Component({
   selector: 'app-shape',
@@ -130,8 +132,12 @@ export class ShapeComponent implements OnInit, OnDestroy {
       .attr('viewBox', [0, 0, width, height].join(' '))
       .attr('preserveAspectRatio', 'xMidYMid meet');
 
+    // Add a group for temporary elements
+    const tempGroup = this.svg.append('g').attr('class', 'temp-elements');
+
     // Set up projection with correct typing
-    this.projection = d3.geoIdentity()
+    this.projection = d3
+      .geoIdentity()
       .reflectY(true)
       .fitSize([width, height], geoJsonData) as GeoIdentityProjection;
 
@@ -142,8 +148,12 @@ export class ShapeComponent implements OnInit, OnDestroy {
 
     // Draw features with proper typing
     const features = shapesGroup
-      .selectAll<SVGPathElement, Feature<Geometry, GeoJsonFeatureProperties>>('path')
-      .data(geoJsonData.features as Feature<Geometry, GeoJsonFeatureProperties>[])
+      .selectAll<SVGPathElement, Feature<Geometry, GeoJsonFeatureProperties>>(
+        'path'
+      )
+      .data(
+        geoJsonData.features as Feature<Geometry, GeoJsonFeatureProperties>[]
+      )
       .enter()
       .append('path')
       .attr('d', this.pathGenerator)
@@ -158,69 +168,114 @@ export class ShapeComponent implements OnInit, OnDestroy {
 
     if (this.interactive) {
       features
-        .on('mouseenter', function(this: SVGPathElement, event: Event, d: Feature<Geometry, GeoJsonFeatureProperties>) {
-          const target = d3.select(this);
-          if (!target.classed('selected')) {
-            const originalFill = d.properties?.['fill'] || defaultFill;
-            const originalStroke = d.properties?.['stroke'] || defaultStroke;
-            const brighterFill = d3.color(originalFill)?.brighter(0.3);
-            const darkerStroke = d3.color(originalStroke)?.darker(0.3);
+        .on(
+          'mouseenter',
+          function (
+            this: SVGPathElement,
+            event: Event,
+            d: Feature<Geometry, GeoJsonFeatureProperties>
+          ) {
+            const target = d3.select(this);
+            if (!target.classed('selected')) {
+              const originalFill = d.properties?.['fill'] || defaultFill;
+              const originalStroke = d.properties?.['stroke'] || defaultStroke;
+              const brighterFill = d3.color(originalFill)?.brighter(0.3);
+              const darkerStroke = d3.color(originalStroke)?.darker(0.3);
 
-            target
-              .transition()
-              .duration(200)
-              .attr('fill', brighterFill?.toString() || originalFill)
-              .attr('stroke', darkerStroke?.toString() || originalStroke);
+              target
+                .transition()
+                .duration(200)
+                .attr('fill', brighterFill?.toString() || originalFill)
+                .attr('stroke', darkerStroke?.toString() || originalStroke);
+            }
           }
-        })
-        .on('mouseleave', function(this: SVGPathElement, event: Event, d: Feature<Geometry, GeoJsonFeatureProperties>) {
-          const target = d3.select(this);
-          if (!target.classed('selected')) {
-            target
-              .transition()
-              .duration(200)
-              .attr('fill', d.properties?.['fill'] || defaultFill)
-              .attr('stroke', d.properties?.['stroke'] || defaultStroke);
+        )
+        .on(
+          'mouseleave',
+          function (
+            this: SVGPathElement,
+            event: Event,
+            d: Feature<Geometry, GeoJsonFeatureProperties>
+          ) {
+            const target = d3.select(this);
+            if (!target.classed('selected')) {
+              target
+                .transition()
+                .duration(200)
+                .attr('fill', d.properties?.['fill'] || defaultFill)
+                .attr('stroke', d.properties?.['stroke'] || defaultStroke);
+            }
           }
-        })
-        .on('click', (event: Event, d: Feature<Geometry, GeoJsonFeatureProperties>) => {
-          event.stopPropagation();
-          const target = d3.select(event.target as SVGPathElement);
-          const targetSelection = shapesGroup
-            .selectAll<SVGPathElement, Feature<Geometry, GeoJsonFeatureProperties>>('path')
-            .filter((_, i, nodes) => nodes[i] === event.target);
+        )
+        .on(
+          'click',
+          (event: Event, d: Feature<Geometry, GeoJsonFeatureProperties>) => {
+            event.stopPropagation();
+            const target = d3.select(event.target as SVGPathElement);
+            const targetSelection = shapesGroup
+              .selectAll<
+                SVGPathElement,
+                Feature<Geometry, GeoJsonFeatureProperties>
+              >('path')
+              .filter((_, i, nodes) => nodes[i] === event.target);
 
-          // Deselect previous if exists
-          if (this.selectedElement) {
-            const prevData = this.selectedElement.datum();
-            this.selectedElement
-              .classed('selected', false)
-              .transition()
-              .duration(200)
-              .attr('fill', prevData.properties?.['fill'] || this.fillColor)
-              .attr('stroke', prevData.properties?.['stroke'] || this.strokeColor)
-              .attr('stroke-width', prevData.properties?.['stroke-width'] || 1);
+            // Deselect previous if exists
+            if (this.selectedElement) {
+              const prevData = this.selectedElement.datum();
+              this.selectedElement
+                .classed('selected', false)
+                .transition()
+                .duration(200)
+                .attr('fill', prevData.properties?.['fill'] || this.fillColor)
+                .attr(
+                  'stroke',
+                  prevData.properties?.['stroke'] || this.strokeColor
+                )
+                .attr(
+                  'stroke-width',
+                  prevData.properties?.['stroke-width'] || 1
+                );
+            }
+
+            // Select new if different
+            if (
+              !this.selectedElement?.node()?.isSameNode(event.target as Node)
+            ) {
+              this.selectedElement = targetSelection;
+              target.classed('selected', true).raise();
+
+              const strokeColor = d3
+                .color(d.properties?.['stroke'] || this.strokeColor)
+                ?.darker(0.5);
+              const fillColor = d3
+                .color(d.properties?.['fill'] || this.fillColor)
+                ?.brighter(0.5);
+
+              target
+                .transition()
+                .duration(200)
+                .attr(
+                  'fill',
+                  fillColor?.toString() ||
+                    d.properties?.['fill'] ||
+                    this.fillColor
+                )
+                .attr(
+                  'stroke',
+                  strokeColor?.toString() ||
+                    d.properties?.['stroke'] ||
+                    this.strokeColor
+                )
+                .attr('stroke-width', 2);
+            } else {
+              this.selectedElement = null;
+            }
           }
-
-          // Select new if different
-          if (!this.selectedElement?.node()?.isSameNode(event.target as Node)) {
-            this.selectedElement = targetSelection;
-            target.classed('selected', true).raise();
-
-            const strokeColor = d3.color(d.properties?.['stroke'] || this.strokeColor)?.darker(0.5);
-            const fillColor = d3.color(d.properties?.['fill'] || this.fillColor)?.brighter(0.5);
-
-            target
-              .transition()
-              .duration(200)
-              .attr('fill', fillColor?.toString() || d.properties?.['fill'] || this.fillColor)
-              .attr('stroke', strokeColor?.toString() || d.properties?.['stroke'] || this.strokeColor)
-              .attr('stroke-width', 2);
-          } else {
-            this.selectedElement = null;
-          }
-        });
+        );
     }
+
+    // Clear temporary elements after rendering
+    tempGroup.remove();
 
     // Handle deselection when clicking outside
     this.svg.on('click', (event: MouseEvent) => {
