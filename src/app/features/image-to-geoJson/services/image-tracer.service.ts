@@ -168,43 +168,125 @@ export class ImageTracerService {
 
     const length = path.getTotalLength();
     const points: [number, number][] = [];
-    const numPoints = Math.max(200, Math.ceil(length / 1.5)); // Increased sampling density
+    const minPoints = 100;
+    const maxPoints = 500;
+    const stepSize = Math.max(length / maxPoints, 1);
+    let currentLength = 0;
 
-    for (let i = 0; i <= numPoints; i++) {
-      const point = path.getPointAtLength((i / numPoints) * length);
-      points.push([point.x, point.y]);
+    // Sample points along the path at variable intervals
+    while (currentLength <= length) {
+      const point = path.getPointAtLength(currentLength);
+      // Only add point if it's significantly different from the last point
+      if (
+        points.length === 0 ||
+        Math.hypot(
+          point.x - points[points.length - 1][0],
+          point.y - points[points.length - 1][1]
+        ) > 0.5
+      ) {
+        points.push([point.x, point.y]);
+      }
+      currentLength += stepSize;
     }
+
+    // Ensure we always include the last point
+    const lastPoint = path.getPointAtLength(length);
+    points.push([lastPoint.x, lastPoint.y]);
 
     return this.cleanPoints(points);
   }
 
   private cleanPoints(points: [number, number][]): [number, number][] {
-    const minDistance = 0.001; // Further increased minimum distance for aggressive filtering
-    const cleaned: [number, number][] = [];
+    if (points.length < 3) return points;
 
-    for (let i = 0; i < points.length; i++) {
-      const [x, y] = points[i];
-      if (
-        cleaned.length === 0 ||
-        Math.sqrt(
-          Math.pow(x - cleaned[cleaned.length - 1][0], 2) +
-          Math.pow(y - cleaned[cleaned.length - 1][1], 2)
-        ) > minDistance
-      ) {
-        cleaned.push([x, y]);
+    const cleaned: [number, number][] = [];
+    const minDistance = 1.0; // Increased threshold for point filtering
+
+    // Keep first point
+    cleaned.push(points[0]);
+
+    // Filter middle points based on distance and angle
+    for (let i = 1; i < points.length - 1; i++) {
+      const prev = cleaned[cleaned.length - 1];
+      const curr = points[i];
+      const next = points[i + 1];
+
+      // Calculate distances
+      const d1 = Math.hypot(curr[0] - prev[0], curr[1] - prev[1]);
+      const d2 = Math.hypot(next[0] - curr[0], next[1] - curr[1]);
+
+      // Calculate angle between segments
+      const angle = Math.abs(
+        Math.atan2(next[1] - curr[1], next[0] - curr[0]) -
+          Math.atan2(curr[1] - prev[1], curr[0] - prev[0])
+      );
+
+      // Keep point if it represents a significant change in direction or distance
+      if (d1 > minDistance && (angle > 0.1 || d2 > minDistance * 2)) {
+        cleaned.push(curr);
       }
     }
 
-    // Ensure the path is closed if it represents a polygon
+    // Keep last point and ensure the shape is closed
+    const last = points[points.length - 1];
     if (
-      cleaned.length > 2 &&
-      (cleaned[0][0] !== cleaned[cleaned.length - 1][0] ||
-        cleaned[0][1] !== cleaned[cleaned.length - 1][1])
+      Math.hypot(last[0] - cleaned[0][0], last[1] - cleaned[0][1]) > minDistance
     ) {
+      cleaned.push(last);
+    }
+    if (!this.pointsMatch(cleaned[0], cleaned[cleaned.length - 1])) {
       cleaned.push([...cleaned[0]]);
     }
 
     return cleaned;
+  }
+
+  private pointsMatch(
+    p1: [number, number],
+    p2: [number, number],
+    threshold = 0.1
+  ): boolean {
+    return (
+      Math.abs(p1[0] - p2[0]) < threshold && Math.abs(p1[1] - p2[1]) < threshold
+    );
+  }
+
+  private cleanCoordinates(coords: [number, number][]): [number, number][] {
+    if (coords.length < 4) return coords;
+
+    // First pass: Remove redundant points
+    let simplified = coords.filter((point, index, array) => {
+      if (index === 0) return true;
+      const prev = array[index - 1];
+      return !this.pointsMatch(point, prev);
+    });
+
+    // Ensure minimum number of points for a valid polygon
+    if (simplified.length < 4) {
+      return coords;
+    }
+
+    try {
+      // Use turf.js for advanced simplification
+      const line = turf.lineString(simplified);
+      const simplifiedGeoJson = turf.simplify(line, {
+        tolerance: 0.001,
+        highQuality: true,
+        mutate: false,
+      });
+
+      simplified = simplifiedGeoJson.geometry.coordinates as [number, number][];
+
+      // Ensure the polygon is properly closed
+      if (!this.pointsMatch(simplified[0], simplified[simplified.length - 1])) {
+        simplified.push([...simplified[0]]);
+      }
+
+      return simplified;
+    } catch (error) {
+      console.warn('Error in coordinate simplification:', error);
+      return simplified;
+    }
   }
 
   private traceImageToSvg(
@@ -258,41 +340,6 @@ export class ImageTracerService {
     });
   }
 
-  private cleanCoordinates(coords: [number, number][]): [number, number][] {
-    const minDistance = 0.0005; // Increased minimum distance to filter out closely spaced points
-    const normalized = coords.filter((point, index, array) => {
-      if (index === 0) return true;
-      const prev = array[index - 1];
-      const distance = Math.sqrt(
-        Math.pow(point[0] - prev[0], 2) + Math.pow(point[1] - prev[1], 2)
-      );
-      return distance > minDistance;
-    });
-
-    if (normalized.length < 4) return normalized;
-
-    // Ensure the polygon is properly closed
-    const first = normalized[0];
-    const last = normalized[normalized.length - 1];
-    if (first[0] !== last[0] || first[1] !== last[1]) {
-      normalized.push([...first]);
-    }
-
-    try {
-      const line = turf.lineString(normalized);
-      const simplified = turf.simplify(line, {
-        tolerance: 0.0001, // Adjusted tolerance for better simplification
-        highQuality: true,
-        mutate: false,
-      });
-
-      return simplified.geometry.coordinates as [number, number][];
-    } catch (error) {
-      console.warn('Error simplifying coordinates:', error);
-      return normalized;
-    }
-  }
-
   private createValidPolygon(
     coords: [number, number][]
   ): Feature<Polygon> | null {
@@ -316,9 +363,10 @@ export class ImageTracerService {
 
         // Ensure the polygon is properly closed
         const first = simplified.geometry.coordinates[0][0];
-        const last = simplified.geometry.coordinates[0][
-          simplified.geometry.coordinates[0].length - 1
-        ];
+        const last =
+          simplified.geometry.coordinates[0][
+            simplified.geometry.coordinates[0].length - 1
+          ];
         if (first[0] !== last[0] || first[1] !== last[1]) {
           simplified.geometry.coordinates[0].push([...first]);
         }
