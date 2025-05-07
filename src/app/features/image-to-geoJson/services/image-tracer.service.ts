@@ -172,8 +172,8 @@ export class ImageTracerService {
     const length = pathProps.getTotalLength();
     const points: [number, number][] = [];
     
-    // Adaptive sampling based on path length and curvature
-    const baseSamples = Math.max(200, Math.ceil(length / 1.5));
+    // More dense sampling for better detail
+    const baseSamples = Math.max(500, Math.ceil(length));
     let prevPoint = pathProps.getPointAtLength(0);
     let prevTangent = pathProps.getTangentAtLength(0);
     points.push([prevPoint.x, prevPoint.y]);
@@ -185,20 +185,27 @@ export class ImageTracerService {
       const point = pathProps.getPointAtLength(t);
       const tangent = pathProps.getTangentAtLength(t);
       
-      // Calculate curvature using tangent angle change
+      // Enhanced curvature detection
       const angle = Math.atan2(tangent.y, tangent.x);
       const prevAngle = Math.atan2(prevTangent.y, prevTangent.x);
       const angleDiff = Math.abs(angle - prevAngle);
       accumulatedAngle += angleDiff;
 
-      // Add points based on curvature and distance
+      // Add points based on enhanced criteria
       const distance = Math.hypot(point.x - prevPoint.x, point.y - prevPoint.y);
-      if (i === baseSamples || angleDiff > 0.05 || distance > 2.0 || accumulatedAngle > 0.15) {
+      if (i === baseSamples || angleDiff > 0.02 || distance > 1.0 || accumulatedAngle > 0.1) {
         points.push([point.x, point.y]);
         prevPoint = point;
         prevTangent = tangent;
         accumulatedAngle = 0;
       }
+    }
+
+    // Ensure the path is closed properly
+    const firstPoint = points[0];
+    const lastPoint = points[points.length - 1];
+    if (!this.pointsMatch(firstPoint, lastPoint)) {
+      points.push([...firstPoint]);
     }
 
     return points;
@@ -375,48 +382,77 @@ export class ImageTracerService {
         return;
       }
 
-      // Use higher resolution for better detail
-      const maxDimension = 1600;
-      const ratio = Math.min(
-        maxDimension / img.width,
-        maxDimension / img.height
-      );
+      // Higher resolution for better detail
+      const maxDimension = 2000; // Increased for better detail
+      const ratio = Math.min(maxDimension / img.width, maxDimension / img.height);
       canvas.width = img.width * ratio;
       canvas.height = img.height * ratio;
 
-      // Enhanced image preprocessing
+      // Image preprocessing for better tracing
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
       
-      // Create clean background
+      // White background
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
-      // Apply image enhancements
-      ctx.filter = 'contrast(110%) brightness(105%)';
+      // Apply image preprocessing
+      ctx.filter = 'contrast(120%) brightness(105%) saturate(120%)';
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       ctx.filter = 'none';
 
-      // Fine-tuned Potrace options
+      // Enhanced Potrace options for better shape detection
       const traceOptions: PotraceOptions = {
         color: options.color || '#000000',
         background: '#ffffff',
         threshold: options.threshold !== undefined ? options.threshold : 128,
-        turdSize: options.turdSize || 40, // Reduced to preserve more detail
-        alphaMax: 0.15, // Reduced for smoother curves
-        turnPolicy: 'minority',
+        turdSize: options.turdSize || 25, // Reduced for better detail preservation
+        alphaMax: 0.1, // Reduced for smoother curves
+        turnPolicy: 'black', // Changed for better shape detection
         optCurve: true,
-        optTolerance: 0.08, // Reduced for better curve fitting
+        optTolerance: 0.05 // Reduced for better curve fitting
       };
 
+      // Process image in grayscale for better tracing
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const pixels = imageData.data;
+      
+      // Convert to grayscale and enhance contrast
+      for (let i = 0; i < pixels.length; i += 4) {
+        const r = pixels[i];
+        const g = pixels[i + 1];
+        const b = pixels[i + 2];
+        // Enhanced grayscale conversion with better contrast
+        const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+        pixels[i] = pixels[i + 1] = pixels[i + 2] = gray;
+      }
+      
+      ctx.putImageData(imageData, 0, 0);
       const imageDataUrl = canvas.toDataURL('image/png');
+
       potrace.trace(imageDataUrl, traceOptions, (err: Error | null, svg: string) => {
         if (err) {
           reject(err);
         } else {
-          resolve(svg);
+          // Post-process SVG to ensure complete paths
+          const processedSvg = svg.replace(/<path[^>]*d="([^"]*)"[^>]*>/g, (match, d) => {
+            return match.replace(d, this.ensureClosedPath(d));
+          });
+          resolve(processedSvg);
         }
       });
     });
+  }
+
+  private ensureClosedPath(pathData: string): string {
+    // Ensure path is properly closed
+    if (!pathData.trim().endsWith('Z')) {
+      pathData = pathData.trim() + ' Z';
+    }
+    // Remove any double spaces and normalize commands
+    return pathData
+      .replace(/\s+/g, ' ')
+      .replace(/([MmLlHhVvCcSsQqTtAa])\s*/g, ' $1 ')
+      .trim();
   }
 }
