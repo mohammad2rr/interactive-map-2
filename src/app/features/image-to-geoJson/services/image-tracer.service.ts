@@ -20,6 +20,15 @@ interface PotraceOptions extends TraceOptions {
   optTolerance?: number;
 }
 
+interface GeoJsonFeatureProperties {
+  id: string;
+  stroke: string;
+  fill: string;
+  'stroke-width': number;
+}
+
+type GeoJsonFeature = Feature<Polygon, GeoJsonFeatureProperties>;
+
 @Injectable({
   providedIn: 'root',
 })
@@ -117,35 +126,40 @@ export class ImageTracerService {
           const polygon = this.createValidPolygon(cleanedCoords);
           if (!polygon) return null;
 
-          return {
+          const feature: GeoJsonFeature = {
             type: 'Feature',
             properties: {
               id: `shape-${index}`,
               stroke: path.getAttribute('stroke') || '#000000',
-              fill: path.getAttribute('fill') || 'none',
-              strokeWidth: parseFloat(path.getAttribute('stroke-width') || '1'),
+              fill: path.getAttribute('fill') || '#cccccc',
+              'stroke-width': 1,
             },
             geometry: polygon.geometry,
           };
+
+          console.log(
+            'Generated GeoJSON Feature:',
+            JSON.stringify(feature, null, 2)
+          );
+          return feature;
         } catch (error) {
-          console.warn(`Error processing path at index ${index}:`, error);
+          console.error('Error processing path:', error);
           return null;
         }
       })
     );
 
     const validFeatures = features.filter(
-      (f): f is Feature<Polygon, FeatureProperties> => f !== null
+      (f): f is GeoJsonFeature => f !== null
     );
 
-    if (validFeatures.length === 0) {
-      throw new Error('No valid features could be created from the SVG');
-    }
-
-    return {
+    const geoJson: FeatureCollection<Polygon, GeoJsonFeatureProperties> = {
       type: 'FeatureCollection',
       features: validFeatures,
     };
+
+    console.log('Final GeoJSON:', JSON.stringify(geoJson, null, 2));
+    return geoJson;
   }
 
   private parseSvgPath(pathData: string): [number, number][] {
@@ -228,19 +242,38 @@ export class ImageTracerService {
   }
 
   private cleanCoordinates(coords: [number, number][]): [number, number][] {
-    const normalized = this.normalizeCoordinates(coords);
+    const minDistance = 0.0001; // Increased minimum distance to reduce extra points
+    const normalized = coords.filter((point, index, array) => {
+      if (index === 0) return true;
+      const prev = array[index - 1];
+      const distance = Math.sqrt(
+        Math.pow(point[0] - prev[0], 2) + Math.pow(point[1] - prev[1], 2)
+      );
+      return distance > minDistance;
+    });
+
     if (normalized.length < 4) return normalized;
 
     try {
       const line = turf.lineString(normalized);
       const simplified = turf.simplify(line, {
-        tolerance: 0.00005, // Reduced tolerance for finer simplification
+        tolerance: 0.0001, // Increased tolerance for better simplification
         highQuality: true,
         mutate: false,
       });
 
       const result = simplified.geometry.coordinates as [number, number][];
-      return this.normalizeCoordinates(result);
+
+      // Ensure first and last points match to close the polygon properly
+      if (
+        result.length >= 3 &&
+        (result[0][0] !== result[result.length - 1][0] ||
+          result[0][1] !== result[result.length - 1][1])
+      ) {
+        result.push([...result[0]]);
+      }
+
+      return result;
     } catch (error) {
       console.warn('Error simplifying coordinates:', error);
       return normalized;
