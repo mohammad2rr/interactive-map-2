@@ -242,7 +242,7 @@ export class ImageTracerService {
   }
 
   private cleanCoordinates(coords: [number, number][]): [number, number][] {
-    const minDistance = 0.0001; // Increased minimum distance to reduce extra points
+    const minDistance = 0.0005; // Increased minimum distance to filter out closely spaced points
     const normalized = coords.filter((point, index, array) => {
       if (index === 0) return true;
       const prev = array[index - 1];
@@ -254,56 +254,26 @@ export class ImageTracerService {
 
     if (normalized.length < 4) return normalized;
 
+    // Ensure the polygon is properly closed
+    const first = normalized[0];
+    const last = normalized[normalized.length - 1];
+    if (first[0] !== last[0] || first[1] !== last[1]) {
+      normalized.push([...first]);
+    }
+
     try {
       const line = turf.lineString(normalized);
       const simplified = turf.simplify(line, {
-        tolerance: 0.0001, // Increased tolerance for better simplification
+        tolerance: 0.0001, // Adjusted tolerance for better simplification
         highQuality: true,
         mutate: false,
       });
 
-      const result = simplified.geometry.coordinates as [number, number][];
-
-      // Ensure first and last points match to close the polygon properly
-      if (
-        result.length >= 3 &&
-        (result[0][0] !== result[result.length - 1][0] ||
-          result[0][1] !== result[result.length - 1][1])
-      ) {
-        result.push([...result[0]]);
-      }
-
-      return result;
+      return simplified.geometry.coordinates as [number, number][];
     } catch (error) {
       console.warn('Error simplifying coordinates:', error);
       return normalized;
     }
-  }
-
-  private normalizeCoordinates(coords: [number, number][]): [number, number][] {
-    const minDistance = 0.00001;
-    const normalized = coords.filter((point, index, array) => {
-      if (index === 0) return true;
-      const prev = array[index - 1];
-      const distance = Math.sqrt(
-        Math.pow(point[0] - prev[0], 2) + Math.pow(point[1] - prev[1], 2)
-      );
-      return distance > minDistance;
-    });
-
-    if (normalized.length < 3) return [];
-
-    const first = normalized[0];
-    const last = normalized[normalized.length - 1];
-    const distance = Math.sqrt(
-      Math.pow(first[0] - last[0], 2) + Math.pow(first[1] - last[1], 2)
-    );
-
-    if (distance > minDistance) {
-      normalized.push([...first]);
-    }
-
-    return normalized;
   }
 
   private createValidPolygon(
@@ -326,6 +296,15 @@ export class ImageTracerService {
           tolerance: 0.00005,
           highQuality: true,
         });
+
+        // Ensure the polygon is properly closed
+        const first = simplified.geometry.coordinates[0][0];
+        const last = simplified.geometry.coordinates[0][
+          simplified.geometry.coordinates[0].length - 1
+        ];
+        if (first[0] !== last[0] || first[1] !== last[1]) {
+          simplified.geometry.coordinates[0].push([...first]);
+        }
 
         return simplified;
       }
