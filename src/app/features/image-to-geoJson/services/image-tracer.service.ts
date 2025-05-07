@@ -116,10 +116,13 @@ export class ImageTracerService {
           if (points.length < 3) return null;
 
           // Scale and transform points
-          const scaledPoints = points.map(([x, y]) => [
-            x * scale.x + scale.offsetX,
-            scale.offsetY - y * scale.y,
-          ] as [number, number]);
+          const scaledPoints = points.map(
+            ([x, y]) =>
+              [x * scale.x + scale.offsetX, scale.offsetY - y * scale.y] as [
+                number,
+                number
+              ]
+          );
 
           // Clean and validate coordinates
           const cleanedPoints = this.cleanPoints(scaledPoints);
@@ -171,20 +174,20 @@ export class ImageTracerService {
     const pathProps = new svgPathProperties(pathData);
     const length = pathProps.getTotalLength();
     const points: [number, number][] = [];
-    
+
     // More dense sampling for better detail
     const baseSamples = Math.max(500, Math.ceil(length));
     let prevPoint = pathProps.getPointAtLength(0);
     let prevTangent = pathProps.getTangentAtLength(0);
     points.push([prevPoint.x, prevPoint.y]);
-    
+
     let accumulatedAngle = 0;
-    
+
     for (let i = 1; i <= baseSamples; i++) {
       const t = (i / baseSamples) * length;
       const point = pathProps.getPointAtLength(t);
       const tangent = pathProps.getTangentAtLength(t);
-      
+
       // Enhanced curvature detection
       const angle = Math.atan2(tangent.y, tangent.x);
       const prevAngle = Math.atan2(prevTangent.y, prevTangent.x);
@@ -193,7 +196,12 @@ export class ImageTracerService {
 
       // Add points based on enhanced criteria
       const distance = Math.hypot(point.x - prevPoint.x, point.y - prevPoint.y);
-      if (i === baseSamples || angleDiff > 0.02 || distance > 1.0 || accumulatedAngle > 0.1) {
+      if (
+        i === baseSamples ||
+        angleDiff > 0.02 ||
+        distance > 1.0 ||
+        accumulatedAngle > 0.1
+      ) {
         points.push([point.x, point.y]);
         prevPoint = point;
         prevTangent = tangent;
@@ -233,7 +241,7 @@ export class ImageTracerService {
       // Calculate local curvature using three points
       const angle = Math.abs(
         Math.atan2(next[1] - curr[1], next[0] - curr[0]) -
-        Math.atan2(curr[1] - prev[1], curr[0] - prev[0])
+          Math.atan2(curr[1] - prev[1], curr[0] - prev[0])
       );
 
       // Keep points that represent significant shape features
@@ -249,11 +257,11 @@ export class ImageTracerService {
     // Ensure proper closure with smooth connection
     const last = points[points.length - 1];
     const distanceToFirst = this.getDistance(last, cleaned[0]);
-    
+
     if (distanceToFirst > minDistance / 2) {
       cleaned.push(last);
     }
-    
+
     if (!this.pointsMatch(cleaned[0], cleaned[cleaned.length - 1])) {
       cleaned.push([...cleaned[0]]);
     }
@@ -265,33 +273,41 @@ export class ImageTracerService {
     return Math.hypot(p2[0] - p1[0], p2[1] - p1[1]);
   }
 
-  private pointsMatch(p1: [number, number], p2: [number, number], threshold = 0.1): boolean {
-    return Math.abs(p1[0] - p2[0]) < threshold && Math.abs(p1[1] - p2[1]) < threshold;
+  private pointsMatch(
+    p1: [number, number],
+    p2: [number, number],
+    threshold = 0.1
+  ): boolean {
+    return (
+      Math.abs(p1[0] - p2[0]) < threshold && Math.abs(p1[1] - p2[1]) < threshold
+    );
   }
 
-  private createValidPolygon(coords: [number, number][]): Feature<Polygon> | null {
+  private createValidPolygon(
+    coords: [number, number][]
+  ): Feature<Polygon> | null {
     try {
       if (coords.length < 4) return null;
 
       // Create initial polygon
       const polygon = turf.polygon([coords]);
-      
+
       if (turf.booleanValid(polygon)) {
         // Multi-pass simplification with progressively finer tolerances
         let simplified = turf.simplify(polygon, {
           tolerance: 0.0008,
-          highQuality: true
+          highQuality: true,
         });
-        
+
         simplified = turf.simplify(simplified, {
           tolerance: 0.0004,
-          highQuality: true
+          highQuality: true,
         });
 
         // Final pass with very fine tolerance for detail preservation
         simplified = turf.simplify(simplified, {
           tolerance: 0.0002,
-          highQuality: true
+          highQuality: true,
         });
 
         return simplified;
@@ -301,7 +317,7 @@ export class ImageTracerService {
       const line = turf.lineString(coords);
       const buffered = turf.buffer(line, 0.0000005, {
         units: 'degrees',
-        steps: 180 // Increased for smoother edges
+        steps: 180, // Increased for smoother edges
       });
 
       if (!buffered) return null;
@@ -317,7 +333,7 @@ export class ImageTracerService {
         const perimeter = turf.length(turf.lineString(poly as Position[]));
         // Calculate shape compactness score
         const score = (4 * Math.PI * area) / (perimeter * perimeter);
-        
+
         if (score > bestScore) {
           bestScore = score;
           bestPolygon = poly as Position[];
@@ -330,7 +346,7 @@ export class ImageTracerService {
       let final = turf.polygon([bestPolygon]);
       final = turf.simplify(final, {
         tolerance: 0.00004,
-        highQuality: true
+        highQuality: true,
       });
 
       // Smooth the final shape
@@ -387,28 +403,33 @@ export class ImageTracerService {
       // Enhanced image preprocessing
       this.ctx.fillStyle = '#ffffff';
       this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-      
+
       // Improved contrast and edge detection
       this.ctx.filter = 'contrast(150%) brightness(110%)';
       this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
       this.ctx.filter = 'none';
 
-      // Enhanced Potrace options
+      // Enhanced Potrace options for better detail preservation
       const traceOptions: PotraceOptions = {
         color: options.color || '#000000',
         background: '#ffffff',
-        threshold: options.threshold !== undefined ? options.threshold : 140,
-        turdSize: options.turdSize || 15, // Reduced for better detail
-        alphaMax: 0.05, // Reduced for smoother curves
+        threshold: options.threshold !== undefined ? options.threshold : 120, // Lowered threshold for finer details
+        turdSize: options.turdSize || 2, // Reduced to capture smaller features
+        alphaMax: 0.1, // Increased for smoother curves
         turnPolicy: 'minority', // Better for complex shapes
         optCurve: true,
-        optTolerance: 0.1 // Increased for better curve fitting
+        optTolerance: 0.2, // Increased for better curve fitting
       };
 
       // Process image with enhanced grayscale conversion
-      const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+      const imageData = this.ctx.getImageData(
+        0,
+        0,
+        this.canvas.width,
+        this.canvas.height
+      );
       const pixels = imageData.data;
-      
+
       for (let i = 0; i < pixels.length; i += 4) {
         const r = pixels[i];
         const g = pixels[i + 1];
@@ -417,17 +438,21 @@ export class ImageTracerService {
         const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
         pixels[i] = pixels[i + 1] = pixels[i + 2] = gray;
       }
-      
+
       this.ctx.putImageData(imageData, 0, 0);
       const imageDataUrl = this.canvas.toDataURL('image/png');
 
-      potrace.trace(imageDataUrl, traceOptions, (err: Error | null, svg: string) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(this.ensureClosedPath(svg));
+      potrace.trace(
+        imageDataUrl,
+        traceOptions,
+        (err: Error | null, svg: string) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(this.ensureClosedPath(svg));
+          }
         }
-      });
+      );
     });
   }
 

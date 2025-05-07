@@ -306,7 +306,7 @@ export class ShapeComponent implements OnInit, OnDestroy {
     try {
       const polygon = turf.polygon([coords]);
       const area = turf.area(polygon);
-      return area > 0.0001; // Minimum area threshold
+      return area > 0.00005; // Reduced threshold to include smaller polygons
     } catch {
       return false;
     }
