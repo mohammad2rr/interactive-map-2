@@ -114,9 +114,28 @@ export class ShapeComponent implements OnInit, OnDestroy {
   private drawShape(geoJsonData: FeatureCollection): void {
     if (!this.container) return;
 
+    console.log('Starting drawShape method');
+
     // Clear previous render
     const container = this.container.nativeElement;
     container.innerHTML = '';
+    console.log('Cleared previous render');
+
+    // Filter out invalid features
+    const validFeatures = geoJsonData.features.filter((feature) => {
+      if (!feature.geometry || feature.geometry.type !== 'Polygon') {
+        console.warn('Invalid feature excluded:', feature);
+        return false;
+      }
+      const coordinates = (feature.geometry as any).coordinates;
+      if (!coordinates || coordinates.length === 0) {
+        console.warn('Feature with empty coordinates excluded:', feature);
+        return false;
+      }
+      return true;
+    });
+
+    console.log('Valid features count:', validFeatures.length);
 
     // Calculate dimensions
     const containerRect = container.getBoundingClientRect();
@@ -131,29 +150,29 @@ export class ShapeComponent implements OnInit, OnDestroy {
       .attr('height', '100%')
       .attr('viewBox', [0, 0, width, height].join(' '))
       .attr('preserveAspectRatio', 'xMidYMid meet');
-
-    // Add a group for temporary elements
-    const tempGroup = this.svg.append('g').attr('class', 'temp-elements');
+    console.log('Created SVG element');
 
     // Set up projection with correct typing
     this.projection = d3
       .geoIdentity()
       .reflectY(true)
-      .fitSize([width, height], geoJsonData) as GeoIdentityProjection;
+      .fitSize([width, height], {
+        ...geoJsonData,
+        features: validFeatures,
+      }) as GeoIdentityProjection;
 
     this.pathGenerator = d3.geoPath().projection(this.projection);
 
     // Create container for shapes
     const shapesGroup = this.svg.append('g').attr('class', 'shapes');
+    console.log('Added shapes group');
 
     // Draw features with proper typing
     const features = shapesGroup
       .selectAll<SVGPathElement, Feature<Geometry, GeoJsonFeatureProperties>>(
         'path'
       )
-      .data(
-        geoJsonData.features as Feature<Geometry, GeoJsonFeatureProperties>[]
-      )
+      .data(validFeatures as Feature<Geometry, GeoJsonFeatureProperties>[])
       .enter()
       .append('path')
       .attr('d', this.pathGenerator)
@@ -162,6 +181,7 @@ export class ShapeComponent implements OnInit, OnDestroy {
       .attr('stroke-width', (d) => d.properties?.['stroke-width'] || 1)
       .attr('vector-effect', 'non-scaling-stroke')
       .style('pointer-events', 'all');
+    console.log('Rendered features:', features.size());
 
     const defaultFill = this.fillColor;
     const defaultStroke = this.strokeColor;
@@ -274,9 +294,6 @@ export class ShapeComponent implements OnInit, OnDestroy {
         );
     }
 
-    // Clear temporary elements after rendering
-    tempGroup.remove();
-
     // Handle deselection when clicking outside
     this.svg.on('click', (event: MouseEvent) => {
       if (event.target === this.svg.node() && this.selectedElement) {
@@ -291,5 +308,7 @@ export class ShapeComponent implements OnInit, OnDestroy {
         this.selectedElement = null;
       }
     });
+
+    console.log('Finished drawShape method');
   }
 }
