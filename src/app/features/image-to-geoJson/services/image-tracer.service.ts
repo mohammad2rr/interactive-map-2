@@ -375,70 +375,57 @@ export class ImageTracerService {
     options: TraceOptions = {}
   ): Promise<string> {
     return new Promise((resolve, reject) => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        reject(new Error('Could not create canvas context'));
-        return;
+      if (!this.canvas) {
+        this.canvas = document.createElement('canvas');
+        this.ctx = this.canvas.getContext('2d')!;
       }
 
-      // Higher resolution for better detail
-      const maxDimension = 2000; // Increased for better detail
-      const ratio = Math.min(maxDimension / img.width, maxDimension / img.height);
-      canvas.width = img.width * ratio;
-      canvas.height = img.height * ratio;
+      this.canvas.width = img.width;
+      this.canvas.height = img.height;
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-      // Image preprocessing for better tracing
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
+      // Enhanced image preprocessing
+      this.ctx.fillStyle = '#ffffff';
+      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
       
-      // White background
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      // Apply image preprocessing
-      ctx.filter = 'contrast(120%) brightness(105%) saturate(120%)';
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      ctx.filter = 'none';
+      // Improved contrast and edge detection
+      this.ctx.filter = 'contrast(150%) brightness(110%)';
+      this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
+      this.ctx.filter = 'none';
 
-      // Enhanced Potrace options for better shape detection
+      // Enhanced Potrace options
       const traceOptions: PotraceOptions = {
         color: options.color || '#000000',
         background: '#ffffff',
-        threshold: options.threshold !== undefined ? options.threshold : 128,
-        turdSize: options.turdSize || 25, // Reduced for better detail preservation
-        alphaMax: 0.1, // Reduced for smoother curves
-        turnPolicy: 'black', // Changed for better shape detection
+        threshold: options.threshold !== undefined ? options.threshold : 140,
+        turdSize: options.turdSize || 15, // Reduced for better detail
+        alphaMax: 0.05, // Reduced for smoother curves
+        turnPolicy: 'minority', // Better for complex shapes
         optCurve: true,
-        optTolerance: 0.05 // Reduced for better curve fitting
+        optTolerance: 0.1 // Increased for better curve fitting
       };
 
-      // Process image in grayscale for better tracing
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      // Process image with enhanced grayscale conversion
+      const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
       const pixels = imageData.data;
       
-      // Convert to grayscale and enhance contrast
       for (let i = 0; i < pixels.length; i += 4) {
         const r = pixels[i];
         const g = pixels[i + 1];
         const b = pixels[i + 2];
-        // Enhanced grayscale conversion with better contrast
+        // Enhanced grayscale with better edge detection
         const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
         pixels[i] = pixels[i + 1] = pixels[i + 2] = gray;
       }
       
-      ctx.putImageData(imageData, 0, 0);
-      const imageDataUrl = canvas.toDataURL('image/png');
+      this.ctx.putImageData(imageData, 0, 0);
+      const imageDataUrl = this.canvas.toDataURL('image/png');
 
       potrace.trace(imageDataUrl, traceOptions, (err: Error | null, svg: string) => {
         if (err) {
           reject(err);
         } else {
-          // Post-process SVG to ensure complete paths
-          const processedSvg = svg.replace(/<path[^>]*d="([^"]*)"[^>]*>/g, (match, d) => {
-            return match.replace(d, this.ensureClosedPath(d));
-          });
-          resolve(processedSvg);
+          resolve(this.ensureClosedPath(svg));
         }
       });
     });

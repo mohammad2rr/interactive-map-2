@@ -1,6 +1,5 @@
 import { Routes } from '@angular/router';
 import { ImageUploaderComponent } from './components/image-uploader/image-uploader.component';
-import { GeoJsonEditorComponent } from './components/geo-json-editor/geo-json-editor.component';
 import { ShapeComponent } from './components/shape/shape.component';
 
 export const imageToGeoJsonRoutes: Routes = [
@@ -10,22 +9,9 @@ export const imageToGeoJsonRoutes: Routes = [
     children: [
       {
         path: '',
-        redirectTo: 'editor',
-        pathMatch: 'full',
-      },
-      {
-        path: 'editor',
-        component: GeoJsonEditorComponent,
-        data: {
-          reuseComponent: true,
-          preload: true,
-        },
-      },
-      {
-        path: 'preview',
         component: ShapeComponent,
-        outlet: 'preview',
-      },
+        outlet: 'preview'
+      }
     ],
   },
 ];

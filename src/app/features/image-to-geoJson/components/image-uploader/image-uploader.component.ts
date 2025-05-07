@@ -4,15 +4,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
   RouterModule,
-  Router,
-  ActivatedRoute,
   RouterOutlet,
 } from '@angular/router';
 import { ImageTracerService } from '../../services/image-tracer.service';
 import { GeoJsonStateService } from '../../services/geo-json-state.service';
 import { TraceOptions } from '../../services/interfaces';
 import { GeoJSON } from 'geojson';
-import { ThemeService } from '../../../../core/services/theme.service';
 
 @Component({
   selector: 'app-image-uploader',
@@ -30,72 +27,42 @@ export class ImageUploaderComponent implements OnInit {
   selectedFile: File | null = null;
   previewUrl: string | ArrayBuffer | null = null;
   isTracing = false;
-  geoJsonData: GeoJSON | null = null;
 
-  // Configuration options for the tracing
   traceOptions: TraceOptions = {
     color: '#000000',
-    threshold: 128,  // More balanced threshold
-    turdSize: 30,   // Higher turdSize to remove small artifacts
-    turnPolicy: 'black',  // Changed to 'black' for better shape detection
-    background: '#ffffff'  // Explicit white background
+    threshold: 140,
+    turdSize: 15
   };
 
   constructor(
-    private imageTracer: ImageTracerService,
-    private router: Router,
-    private route: ActivatedRoute,
-    private geoJsonState: GeoJsonStateService,
-    public themeService: ThemeService
+    private imageTracerService: ImageTracerService,
+    private geoJsonState: GeoJsonStateService
   ) {}
 
-  ngOnInit() {
-    // Component initialization logic
-  }
+  ngOnInit(): void {}
 
-  onFileSelected(event: Event): void {
+  async onFileSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      this.selectedFile = input.files[0];
+    if (!input.files?.length) return;
 
-      // Create preview
-      const reader = new FileReader();
-      reader.onload = (e) => (this.previewUrl = e.target?.result as string);
-      reader.readAsDataURL(this.selectedFile);
-    }
-  }
-
-  async processImage(): Promise<void> {
-    if (!this.selectedFile) return;
-
+    this.selectedFile = input.files[0];
     this.isTracing = true;
     this.tracingStarted.emit();
 
     try {
-      const geoJson = await this.imageTracer.convertImageToGeoJson(
+      const geoJson = await this.imageTracerService.convertImageToGeoJson(
         this.selectedFile,
         this.traceOptions
       );
-      this.geoJsonState.updateGeoJsonData(geoJson);
+      
+      // Log the GeoJSON data to console
+      console.log('Generated GeoJSON:', geoJson);
+      
       this.geoJsonGenerated.emit(geoJson);
-
-      // Navigate to editor and preview using named outlets
-      await this.router.navigate(
-        [
-          {
-            outlets: {
-              primary: ['editor'],
-              preview: ['preview'],
-            },
-          },
-        ],
-        { relativeTo: this.route }
-      );
+      this.geoJsonState.updateGeoJsonData(geoJson);
     } catch (error) {
-      console.error('Image tracing failed:', error);
-      this.errorOccurred.emit(
-        `Failed to process image. ${(error as any).message || 'Please try another image.'}`
-      );
+      console.error('Error processing image:', error);
+      this.errorOccurred.emit(error as string);
     } finally {
       this.isTracing = false;
       this.tracingCompleted.emit();
