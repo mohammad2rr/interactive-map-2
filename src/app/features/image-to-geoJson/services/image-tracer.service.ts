@@ -9,7 +9,6 @@ import {
   Position,
 } from 'geojson';
 import * as potrace from 'potrace';
-import * as paper from 'paper';
 import * as turf from '@turf/turf';
 import { svgPathProperties } from 'svg-path-properties';
 import { TraceOptions, FeatureProperties, SvgScale } from './interfaces';
@@ -34,9 +33,16 @@ type GeoJsonFeature = Feature<Polygon, GeoJsonFeatureProperties>;
   providedIn: 'root',
 })
 export class ImageTracerService {
+  private canvas: HTMLCanvasElement;
+  private ctx: CanvasRenderingContext2D;
+
   constructor() {
-    // Initialize Paper.js
-    paper.setup(document.createElement('canvas'));
+    this.canvas = document.createElement('canvas');
+    const context = this.canvas.getContext('2d');
+    if (!context) {
+      throw new Error('Could not get canvas context');
+    }
+    this.ctx = context;
   }
 
   async convertImageToGeoJson(
@@ -84,7 +90,6 @@ export class ImageTracerService {
     const doc = parser.parseFromString(svg, 'image/svg+xml');
     const svgElement = doc.documentElement;
 
-    // Extract viewBox and dimensions
     const viewBox = svgElement
       .getAttribute('viewBox')
       ?.split(/[\s,]+/)
@@ -96,40 +101,35 @@ export class ImageTracerService {
       x: viewBox ? width / (viewBox[2] - viewBox[0]) : 1,
       y: viewBox ? height / (viewBox[3] - viewBox[1]) : 1,
       offsetX: viewBox ? -viewBox[0] : 0,
-      offsetY: viewBox ? viewBox[3] : height, // Changed to flip coordinates
+      offsetY: viewBox ? viewBox[3] : height,
     };
 
-    // Find all paths in the SVG
     const paths = Array.from(doc.querySelectorAll('path'));
-
-    // Process each path
     const features = await Promise.all(
       paths.map(async (path, index) => {
         try {
           const d = path.getAttribute('d');
           if (!d) return null;
 
-          // Parse path and transform coordinates
-          const coordinates = this.parseSvgPath(d);
-          if (!coordinates || coordinates.length < 3) return null;
+          // Parse SVG path and convert to points
+          const points = this.parseSvgPath(d);
+          if (points.length < 3) return null;
 
-          // Apply scale and transformations with y-coordinate flipped
-          const scaledCoords = coordinates.map(
-            ([x, y]) =>
-              [
-                x * scale.x + scale.offsetX,
-                scale.offsetY - y * scale.y, // Flip the y-coordinate
-              ] as [number, number]
-          );
+          // Scale and transform points
+          const scaledPoints = points.map(([x, y]) => [
+            x * scale.x + scale.offsetX,
+            scale.offsetY - y * scale.y,
+          ] as [number, number]);
 
-          // Clean up the coordinates
-          const cleanedCoords = this.cleanCoordinates(scaledCoords);
-          if (cleanedCoords.length < 4) return null;
+          // Clean and validate coordinates
+          const cleanedPoints = this.cleanPoints(scaledPoints);
+          if (cleanedPoints.length < 4) return null;
 
-          // Create valid polygon
-          const polygon = this.createValidPolygon(cleanedCoords);
+          // Create and validate polygon
+          const polygon = this.createValidPolygon(cleanedPoints);
           if (!polygon) return null;
 
+          // Create feature with properties
           const feature: GeoJsonFeature = {
             type: 'Feature',
             properties: {
@@ -141,10 +141,6 @@ export class ImageTracerService {
             geometry: polygon.geometry,
           };
 
-          console.log(
-            'Generated GeoJSON Feature:',
-            JSON.stringify(feature, null, 2)
-          );
           return feature;
         } catch (error) {
           console.error('Error processing path:', error);
@@ -153,84 +149,104 @@ export class ImageTracerService {
       })
     );
 
-    const validFeatures = features.filter(
-      (f): f is GeoJsonFeature => f !== null
-    );
+    // Filter valid features
+    const validFeatures = features.filter((f): f is GeoJsonFeature => {
+      if (!f) return false;
+      try {
+        return turf.booleanValid(turf.feature(f.geometry));
+      } catch {
+        return false;
+      }
+    });
 
     const geoJson: FeatureCollection<Polygon, GeoJsonFeatureProperties> = {
       type: 'FeatureCollection',
       features: validFeatures,
     };
 
-    console.log('Final GeoJSON:', JSON.stringify(geoJson, null, 2));
     return geoJson;
   }
 
   private parseSvgPath(pathData: string): [number, number][] {
-    // Create a Paper.js path from SVG data
-    const paperPath = new paper.Path(pathData);
-
-    // Simplify the path with higher precision
-    paperPath.simplify(0.5);
-
-    // Get points along the path
-    const points: [number, number][] = [];
-    const length = paperPath.length;
-    const numPoints = Math.max(100, Math.ceil(length));
-
-    // Use SVGPathProperties for more accurate path sampling
     const pathProps = new svgPathProperties(pathData);
-    const totalLength = pathProps.getTotalLength();
+    const length = pathProps.getTotalLength();
+    const points: [number, number][] = [];
+    
+    // Adaptive sampling based on path length and curvature
+    const baseSamples = Math.max(200, Math.ceil(length / 1.5));
+    let prevPoint = pathProps.getPointAtLength(0);
+    let prevTangent = pathProps.getTangentAtLength(0);
+    points.push([prevPoint.x, prevPoint.y]);
+    
+    let accumulatedAngle = 0;
+    
+    for (let i = 1; i <= baseSamples; i++) {
+      const t = (i / baseSamples) * length;
+      const point = pathProps.getPointAtLength(t);
+      const tangent = pathProps.getTangentAtLength(t);
+      
+      // Calculate curvature using tangent angle change
+      const angle = Math.atan2(tangent.y, tangent.x);
+      const prevAngle = Math.atan2(prevTangent.y, prevTangent.x);
+      const angleDiff = Math.abs(angle - prevAngle);
+      accumulatedAngle += angleDiff;
 
-    for (let i = 0; i <= numPoints; i++) {
-      const point = pathProps.getPointAtLength((i / numPoints) * totalLength);
-      points.push([point.x, point.y]);
+      // Add points based on curvature and distance
+      const distance = Math.hypot(point.x - prevPoint.x, point.y - prevPoint.y);
+      if (i === baseSamples || angleDiff > 0.05 || distance > 2.0 || accumulatedAngle > 0.15) {
+        points.push([point.x, point.y]);
+        prevPoint = point;
+        prevTangent = tangent;
+        accumulatedAngle = 0;
+      }
     }
 
-    // Clean up points
-    return this.cleanPoints(points);
+    return points;
   }
 
   private cleanPoints(points: [number, number][]): [number, number][] {
     if (points.length < 3) return points;
 
     const cleaned: [number, number][] = [];
-    const minDistance = 2.0; // Increased threshold for better filtering
-    const angleThreshold = 0.1; // Minimum angle change to keep a point
+    const minDistance = 1.5; // Reduced for better detail preservation
+    const angleThreshold = 0.08; // Reduced for smoother curves
 
     // Keep first point
     cleaned.push(points[0]);
 
-    // Filter points based on distance and angle
+    // Adaptive point filtering based on local curvature
     for (let i = 1; i < points.length - 1; i++) {
       const prev = cleaned[cleaned.length - 1];
       const curr = points[i];
       const next = points[i + 1];
 
-      const d1 = Math.hypot(curr[0] - prev[0], curr[1] - prev[1]);
-      const d2 = Math.hypot(next[0] - curr[0], next[1] - curr[1]);
+      const d1 = this.getDistance(curr, prev);
+      const d2 = this.getDistance(next, curr);
 
-      // Calculate angle change
+      // Calculate local curvature using three points
       const angle = Math.abs(
         Math.atan2(next[1] - curr[1], next[0] - curr[0]) -
-          Math.atan2(curr[1] - prev[1], curr[0] - prev[0])
+        Math.atan2(curr[1] - prev[1], curr[0] - prev[0])
       );
 
-      if (
-        d1 > minDistance &&
-        (angle > angleThreshold || d2 > minDistance * 2)
-      ) {
+      // Keep points that represent significant shape features
+      const isSignificantCurve = angle > angleThreshold;
+      const isLongSegment = d1 > minDistance * 2 || d2 > minDistance * 2;
+      const isEndPoint = i === points.length - 2;
+
+      if (isSignificantCurve || isLongSegment || isEndPoint) {
         cleaned.push(curr);
       }
     }
 
-    // Add last point and ensure closure
+    // Ensure proper closure with smooth connection
     const last = points[points.length - 1];
-    if (this.getDistance(last, cleaned[0]) > minDistance) {
+    const distanceToFirst = this.getDistance(last, cleaned[0]);
+    
+    if (distanceToFirst > minDistance / 2) {
       cleaned.push(last);
     }
-
-    // Ensure proper closure
+    
     if (!this.pointsMatch(cleaned[0], cleaned[cleaned.length - 1])) {
       cleaned.push([...cleaned[0]]);
     }
@@ -242,50 +258,108 @@ export class ImageTracerService {
     return Math.hypot(p2[0] - p1[0], p2[1] - p1[1]);
   }
 
-  private pointsMatch(
-    p1: [number, number],
-    p2: [number, number],
-    threshold = 0.1
-  ): boolean {
-    return (
-      Math.abs(p1[0] - p2[0]) < threshold && Math.abs(p1[1] - p2[1]) < threshold
-    );
+  private pointsMatch(p1: [number, number], p2: [number, number], threshold = 0.1): boolean {
+    return Math.abs(p1[0] - p2[0]) < threshold && Math.abs(p1[1] - p2[1]) < threshold;
   }
 
-  private cleanCoordinates(coords: [number, number][]): [number, number][] {
-    if (coords.length < 4) return coords;
-
-    // Remove redundant points
-    let simplified = coords.filter((point, index, array) => {
-      if (index === 0) return true;
-      return !this.pointsMatch(point, array[index - 1]);
-    });
-
-    if (simplified.length < 4) return coords;
-
+  private createValidPolygon(coords: [number, number][]): Feature<Polygon> | null {
     try {
-      // Create a Paper.js path for better shape processing
-      const paperPath = new paper.Path();
-      simplified.forEach((point) =>
-        paperPath.add(new paper.Point(point[0], point[1]))
-      );
-      paperPath.closePath();
-      paperPath.simplify(0.5);
+      if (coords.length < 4) return null;
 
-      // Convert back to coordinates
-      simplified = paperPath.segments.map(
-        (segment) => [segment.point.x, segment.point.y] as [number, number]
-      );
+      // Create initial polygon
+      const polygon = turf.polygon([coords]);
+      
+      if (turf.booleanValid(polygon)) {
+        // Multi-pass simplification with progressively finer tolerances
+        let simplified = turf.simplify(polygon, {
+          tolerance: 0.0008,
+          highQuality: true
+        });
+        
+        simplified = turf.simplify(simplified, {
+          tolerance: 0.0004,
+          highQuality: true
+        });
 
-      // Ensure proper closure
-      if (!this.pointsMatch(simplified[0], simplified[simplified.length - 1])) {
-        simplified.push([...simplified[0]]);
+        // Final pass with very fine tolerance for detail preservation
+        simplified = turf.simplify(simplified, {
+          tolerance: 0.0002,
+          highQuality: true
+        });
+
+        return simplified;
       }
 
-      return simplified;
+      // Enhanced polygon repair for invalid shapes
+      const line = turf.lineString(coords);
+      const buffered = turf.buffer(line, 0.0000005, {
+        units: 'degrees',
+        steps: 180 // Increased for smoother edges
+      });
+
+      if (!buffered) return null;
+
+      // Process buffered result to get the best shape
+      const coordinates = buffered.geometry.coordinates as Position[][];
+      let bestPolygon: Position[] | null = null;
+      let bestScore = -1;
+
+      for (const poly of coordinates) {
+        const polygonFeature = turf.polygon([poly as Position[]]);
+        const area = Math.abs(turf.area(polygonFeature));
+        const perimeter = turf.length(turf.lineString(poly as Position[]));
+        // Calculate shape compactness score
+        const score = (4 * Math.PI * area) / (perimeter * perimeter);
+        
+        if (score > bestScore) {
+          bestScore = score;
+          bestPolygon = poly as Position[];
+        }
+      }
+
+      if (!bestPolygon) return null;
+
+      // Create final shape with progressive refinement
+      let final = turf.polygon([bestPolygon]);
+      final = turf.simplify(final, {
+        tolerance: 0.00004,
+        highQuality: true
+      });
+
+      // Smooth the final shape
+      const smoothed = this.smoothPolygon(final);
+      return smoothed;
     } catch (error) {
-      console.warn('Error in coordinate simplification:', error);
-      return simplified;
+      console.warn('Error creating polygon:', error);
+      return null;
+    }
+  }
+
+  private smoothPolygon(polygon: Feature<Polygon>): Feature<Polygon> {
+    try {
+      const coords = polygon.geometry.coordinates[0];
+      const smoothedCoords: Position[] = [];
+      const smoothingFactor = 0.2;
+
+      for (let i = 0; i < coords.length; i++) {
+        const prev = coords[(i - 1 + coords.length) % coords.length];
+        const curr = coords[i];
+        const next = coords[(i + 1) % coords.length];
+
+        // Calculate smoothed point using Chaikin's algorithm
+        const x = curr[0] + smoothingFactor * (prev[0] + next[0] - 2 * curr[0]);
+        const y = curr[1] + smoothingFactor * (prev[1] + next[1] - 2 * curr[1]);
+
+        smoothedCoords.push([x, y]);
+      }
+
+      // Ensure closure
+      smoothedCoords.push([...smoothedCoords[0]]);
+
+      return turf.polygon([smoothedCoords]);
+    } catch (error) {
+      console.warn('Error smoothing polygon:', error);
+      return polygon;
     }
   }
 
@@ -301,7 +375,8 @@ export class ImageTracerService {
         return;
       }
 
-      const maxDimension = 800; // Reduced for better processing
+      // Use higher resolution for better detail
+      const maxDimension = 1600;
       const ratio = Math.min(
         maxDimension / img.width,
         maxDimension / img.height
@@ -309,75 +384,39 @@ export class ImageTracerService {
       canvas.width = img.width * ratio;
       canvas.height = img.height * ratio;
 
-      // Use better image smoothing
+      // Enhanced image preprocessing
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
+      
+      // Create clean background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Apply image enhancements
+      ctx.filter = 'contrast(110%) brightness(105%)';
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      ctx.filter = 'none';
 
+      // Fine-tuned Potrace options
       const traceOptions: PotraceOptions = {
         color: options.color || '#000000',
+        background: '#ffffff',
         threshold: options.threshold !== undefined ? options.threshold : 128,
-        turdSize: options.turdSize || 15, // Increased to remove small artifacts
-        alphaMax: 0.5, // Lower alpha max for smoother curves
-        turnPolicy: options.turnPolicy || 'black',
+        turdSize: options.turdSize || 40, // Reduced to preserve more detail
+        alphaMax: 0.15, // Reduced for smoother curves
+        turnPolicy: 'minority',
         optCurve: true,
-        optTolerance: 0.2,
-        background: options.background ?? undefined,
+        optTolerance: 0.08, // Reduced for better curve fitting
       };
 
       const imageDataUrl = canvas.toDataURL('image/png');
-      potrace.trace(
-        imageDataUrl,
-        traceOptions,
-        (err: Error | null, svg: string) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(svg);
-          }
+      potrace.trace(imageDataUrl, traceOptions, (err: Error | null, svg: string) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(svg);
         }
-      );
+      });
     });
-  }
-
-  private createValidPolygon(
-    coords: [number, number][]
-  ): Feature<Polygon> | null {
-    try {
-      if (coords.length < 4) return null;
-
-      const polygon = turf.polygon([coords]);
-      if (!turf.booleanValid(polygon)) {
-        const buffered = turf.buffer(turf.lineString(coords), 0.000001, {
-          units: 'degrees',
-          steps: 32, // Increased steps for smoother edges
-        });
-
-        if (!buffered) return null;
-
-        const bufferedCoords = buffered.geometry.coordinates[0] as Position[];
-        const simplified = turf.simplify(turf.polygon([bufferedCoords]), {
-          tolerance: 0.00005,
-          highQuality: true,
-        });
-
-        // Ensure the polygon is properly closed
-        const first = simplified.geometry.coordinates[0][0];
-        const last =
-          simplified.geometry.coordinates[0][
-            simplified.geometry.coordinates[0].length - 1
-          ];
-        if (first[0] !== last[0] || first[1] !== last[1]) {
-          simplified.geometry.coordinates[0].push([...first]);
-        }
-
-        return simplified;
-      }
-
-      return polygon;
-    } catch (error) {
-      console.warn('Error creating polygon:', error);
-      return null;
-    }
   }
 }
