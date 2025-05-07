@@ -9,8 +9,9 @@ import {
   Position,
 } from 'geojson';
 import * as potrace from 'potrace';
-import * as svgson from 'svgson';
+import * as paper from 'paper';
 import * as turf from '@turf/turf';
+import { svgPathProperties } from 'svg-path-properties';
 import { TraceOptions, FeatureProperties, SvgScale } from './interfaces';
 
 interface PotraceOptions extends TraceOptions {
@@ -33,7 +34,10 @@ type GeoJsonFeature = Feature<Polygon, GeoJsonFeatureProperties>;
   providedIn: 'root',
 })
 export class ImageTracerService {
-  constructor() {}
+  constructor() {
+    // Initialize Paper.js
+    paper.setup(document.createElement('canvas'));
+  }
 
   async convertImageToGeoJson(
     file: File,
@@ -163,36 +167,27 @@ export class ImageTracerService {
   }
 
   private parseSvgPath(pathData: string): [number, number][] {
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('d', pathData);
+    // Create a Paper.js path from SVG data
+    const paperPath = new paper.Path(pathData);
 
-    const length = path.getTotalLength();
+    // Simplify the path with higher precision
+    paperPath.simplify(0.5);
+
+    // Get points along the path
     const points: [number, number][] = [];
-    const minPoints = 100;
-    const maxPoints = 500;
-    const stepSize = Math.max(length / maxPoints, 1);
-    let currentLength = 0;
+    const length = paperPath.length;
+    const numPoints = Math.max(100, Math.ceil(length));
 
-    // Sample points along the path at variable intervals
-    while (currentLength <= length) {
-      const point = path.getPointAtLength(currentLength);
-      // Only add point if it's significantly different from the last point
-      if (
-        points.length === 0 ||
-        Math.hypot(
-          point.x - points[points.length - 1][0],
-          point.y - points[points.length - 1][1]
-        ) > 0.5
-      ) {
-        points.push([point.x, point.y]);
-      }
-      currentLength += stepSize;
+    // Use SVGPathProperties for more accurate path sampling
+    const pathProps = new svgPathProperties(pathData);
+    const totalLength = pathProps.getTotalLength();
+
+    for (let i = 0; i <= numPoints; i++) {
+      const point = pathProps.getPointAtLength((i / numPoints) * totalLength);
+      points.push([point.x, point.y]);
     }
 
-    // Ensure we always include the last point
-    const lastPoint = path.getPointAtLength(length);
-    points.push([lastPoint.x, lastPoint.y]);
-
+    // Clean up points
     return this.cleanPoints(points);
   }
 
@@ -200,45 +195,51 @@ export class ImageTracerService {
     if (points.length < 3) return points;
 
     const cleaned: [number, number][] = [];
-    const minDistance = 1.0; // Increased threshold for point filtering
+    const minDistance = 2.0; // Increased threshold for better filtering
+    const angleThreshold = 0.1; // Minimum angle change to keep a point
 
     // Keep first point
     cleaned.push(points[0]);
 
-    // Filter middle points based on distance and angle
+    // Filter points based on distance and angle
     for (let i = 1; i < points.length - 1; i++) {
       const prev = cleaned[cleaned.length - 1];
       const curr = points[i];
       const next = points[i + 1];
 
-      // Calculate distances
       const d1 = Math.hypot(curr[0] - prev[0], curr[1] - prev[1]);
       const d2 = Math.hypot(next[0] - curr[0], next[1] - curr[1]);
 
-      // Calculate angle between segments
+      // Calculate angle change
       const angle = Math.abs(
         Math.atan2(next[1] - curr[1], next[0] - curr[0]) -
           Math.atan2(curr[1] - prev[1], curr[0] - prev[0])
       );
 
-      // Keep point if it represents a significant change in direction or distance
-      if (d1 > minDistance && (angle > 0.1 || d2 > minDistance * 2)) {
+      if (
+        d1 > minDistance &&
+        (angle > angleThreshold || d2 > minDistance * 2)
+      ) {
         cleaned.push(curr);
       }
     }
 
-    // Keep last point and ensure the shape is closed
+    // Add last point and ensure closure
     const last = points[points.length - 1];
-    if (
-      Math.hypot(last[0] - cleaned[0][0], last[1] - cleaned[0][1]) > minDistance
-    ) {
+    if (this.getDistance(last, cleaned[0]) > minDistance) {
       cleaned.push(last);
     }
+
+    // Ensure proper closure
     if (!this.pointsMatch(cleaned[0], cleaned[cleaned.length - 1])) {
       cleaned.push([...cleaned[0]]);
     }
 
     return cleaned;
+  }
+
+  private getDistance(p1: [number, number], p2: [number, number]): number {
+    return Math.hypot(p2[0] - p1[0], p2[1] - p1[1]);
   }
 
   private pointsMatch(
@@ -254,30 +255,29 @@ export class ImageTracerService {
   private cleanCoordinates(coords: [number, number][]): [number, number][] {
     if (coords.length < 4) return coords;
 
-    // First pass: Remove redundant points
+    // Remove redundant points
     let simplified = coords.filter((point, index, array) => {
       if (index === 0) return true;
-      const prev = array[index - 1];
-      return !this.pointsMatch(point, prev);
+      return !this.pointsMatch(point, array[index - 1]);
     });
 
-    // Ensure minimum number of points for a valid polygon
-    if (simplified.length < 4) {
-      return coords;
-    }
+    if (simplified.length < 4) return coords;
 
     try {
-      // Use turf.js for advanced simplification
-      const line = turf.lineString(simplified);
-      const simplifiedGeoJson = turf.simplify(line, {
-        tolerance: 0.001,
-        highQuality: true,
-        mutate: false,
-      });
+      // Create a Paper.js path for better shape processing
+      const paperPath = new paper.Path();
+      simplified.forEach((point) =>
+        paperPath.add(new paper.Point(point[0], point[1]))
+      );
+      paperPath.closePath();
+      paperPath.simplify(0.5);
 
-      simplified = simplifiedGeoJson.geometry.coordinates as [number, number][];
+      // Convert back to coordinates
+      simplified = paperPath.segments.map(
+        (segment) => [segment.point.x, segment.point.y] as [number, number]
+      );
 
-      // Ensure the polygon is properly closed
+      // Ensure proper closure
       if (!this.pointsMatch(simplified[0], simplified[simplified.length - 1])) {
         simplified.push([...simplified[0]]);
       }

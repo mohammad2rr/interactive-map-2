@@ -12,6 +12,7 @@ import { Feature, FeatureCollection, Geometry } from 'geojson';
 import { GeoJsonStateService } from '../../services/geo-json-state.service';
 import { Subject, fromEvent } from 'rxjs';
 import { debounceTime, takeUntil, take } from 'rxjs/operators';
+import * as turf from '@turf/turf';
 
 interface GeoJsonFeatureProperties {
   id: string;
@@ -124,7 +125,13 @@ export class ShapeComponent implements OnInit, OnDestroy {
         return false;
       }
       const coordinates = feature.geometry.coordinates;
-      return coordinates && coordinates.length === 1 && coordinates[0].length >= 4;
+      // More strict validation of polygon coordinates
+      return (
+        coordinates &&
+        coordinates.length === 1 &&
+        coordinates[0].length >= 4 &&
+        this.isValidPolygon(coordinates[0])
+      );
     });
 
     if (validFeatures.length === 0) {
@@ -137,14 +144,17 @@ export class ShapeComponent implements OnInit, OnDestroy {
     const width = containerRect.width;
     const height = containerRect.height;
 
-    // Create SVG with better sizing
+    // Create SVG with better sizing and rendering attributes
     this.svg = d3
       .select(container)
       .append('svg')
       .attr('width', '100%')
       .attr('height', '100%')
       .attr('viewBox', [0, 0, width, height].join(' '))
-      .attr('preserveAspectRatio', 'xMidYMid meet');
+      .attr('preserveAspectRatio', 'xMidYMid meet')
+      .style('shape-rendering', 'geometricPrecision')
+      .style('text-rendering', 'geometricPrecision')
+      .style('image-rendering', 'optimizeQuality');
 
     // Set up projection with correct typing
     this.projection = d3
@@ -154,13 +164,14 @@ export class ShapeComponent implements OnInit, OnDestroy {
 
     this.pathGenerator = d3.geoPath().projection(this.projection);
 
-    // Create container for shapes
+    // Create container for shapes with enhanced rendering attributes
     const shapesGroup = this.svg
       .append('g')
       .attr('class', 'shapes')
-      .style('isolation', 'isolate'); // Prevent compositing issues
+      .style('isolation', 'isolate')
+      .style('shape-rendering', 'geometricPrecision');
 
-    // Draw features with proper typing
+    // Draw features with enhanced styling
     const features = shapesGroup
       .selectAll<SVGPathElement, Feature<Geometry, GeoJsonFeatureProperties>>('path')
       .data(validFeatures as Feature<Geometry, GeoJsonFeatureProperties>[])
@@ -171,8 +182,9 @@ export class ShapeComponent implements OnInit, OnDestroy {
       .attr('stroke', (d) => d.properties?.['stroke'] || this.strokeColor)
       .attr('stroke-width', (d) => d.properties?.['stroke-width'] || 1)
       .attr('vector-effect', 'non-scaling-stroke')
+      .attr('shape-rendering', 'geometricPrecision')
       .style('pointer-events', 'all')
-      .style('mix-blend-mode', 'normal'); // Ensure proper blending
+      .style('mix-blend-mode', 'normal');
 
     const defaultFill = this.fillColor;
     const defaultStroke = this.strokeColor;
@@ -299,5 +311,25 @@ export class ShapeComponent implements OnInit, OnDestroy {
         this.selectedElement = null;
       }
     });
+  }
+
+  private isValidPolygon(coords: number[][]): boolean {
+    if (coords.length < 4) return false;
+
+    // Check if the polygon is closed
+    const first = coords[0];
+    const last = coords[coords.length - 1];
+    if (first[0] !== last[0] || first[1] !== last[1]) {
+      return false;
+    }
+
+    // Check for minimum area to filter out tiny/degenerate polygons
+    try {
+      const polygon = turf.polygon([coords]);
+      const area = turf.area(polygon);
+      return area > 0.0001; // Minimum area threshold
+    } catch {
+      return false;
+    }
   }
 }
