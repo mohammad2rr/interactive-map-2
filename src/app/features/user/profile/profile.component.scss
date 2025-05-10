@@ -12,6 +12,7 @@
     border: 1px solid var(--border-color);
     position: relative;
     overflow: hidden;
+    animation: fadeIn 0.5s ease-out;
 
     &::before {
       content: "";
@@ -40,6 +41,8 @@
     gap: 2rem;
 
     .profile-sidebar {
+      animation: slideIn 0.5s ease-out;
+
       .profile-card {
         background: var(--surface-gradient);
         border-radius: 1rem;
@@ -112,6 +115,8 @@
     }
 
     .profile-main {
+      animation: fadeIn 0.5s ease-out 0.2s backwards;
+
       .profile-section {
         background: var(--surface-gradient);
         border-radius: 1rem;

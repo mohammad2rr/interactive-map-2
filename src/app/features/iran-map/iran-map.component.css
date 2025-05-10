@@ -3,11 +3,26 @@
   width: 100%;
   height: 100vh;
   background: var(--surface-gradient);
-  border-radius: 1rem;
+  border-radius: 1.5rem;
   box-shadow: var(--shadow-lg);
   padding: 2rem;
   overflow: hidden;
   animation: fadeIn 0.5s ease-out;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      45deg,
+      rgba(99, 102, 241, 0.05) 0%,
+      rgba(79, 70, 229, 0.05) 100%
+    );
+    pointer-events: none;
+  }
 }
 
 .tooltip {
@@ -28,38 +43,71 @@
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  max-width: 200px;
-  line-height: 1.4;
+  transform-origin: center;
+  animation: tooltipPop 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.tooltip::after {
-  content: "";
-  position: absolute;
-  bottom: -6px;
-  left: 50%;
-  transform: translateX(-50%);
-  border-left: 6px solid transparent;
-  border-right: 6px solid transparent;
-  border-top: 6px solid rgba(33, 37, 41, 0.95);
+svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
 }
 
 path {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  stroke: rgba(255, 255, 255, 0.3);
-  stroke-width: 1;
-  vector-effect: non-scaling-stroke;
-}
-
-path:hover {
   cursor: pointer;
-  filter: brightness(1.1) saturate(1.2);
-  transform: scale(1.02);
-  stroke: rgba(255, 255, 255, 0.8);
-  stroke-width: 2;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 1;
+
+  &:hover {
+    filter: brightness(0.9);
+    transform: translateY(-2px);
+  }
+
+  &.active {
+    filter: brightness(0.8);
+    stroke: var(--primary-color);
+    stroke-width: 2;
+  }
 }
 
-/* Add smooth animations */
+.region-label {
+  font-size: 0.75rem;
+  fill: var(--text-primary);
+  pointer-events: none;
+  user-select: none;
+  text-anchor: middle;
+  transition: all 0.3s ease;
+}
+
+.controls {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  z-index: 5;
+}
+
+.control-button {
+  background: white;
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-md);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -80,7 +128,40 @@ path:hover {
   }
 }
 
-/* Dark mode adjustments */
+@keyframes tooltipPop {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+:host-context([data-bs-theme="dark"]) {
+  .map-container {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  }
+
+  .tooltip {
+    background: linear-gradient(
+      135deg,
+      rgba(15, 23, 42, 0.95),
+      rgba(15, 23, 42, 0.85)
+    );
+  }
+
+  .control-button {
+    background: #1e293b;
+    color: white;
+  }
+
+  .region-label {
+    fill: #e2e8f0;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   .map-container {
     background: linear-gradient(135deg, #1a1f2e 0%, #0f172a 100%);
@@ -91,15 +172,22 @@ path:hover {
   }
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .map-container {
     height: 70vh;
     padding: 1rem;
+    border-radius: 1rem;
   }
 
   .tooltip {
     font-size: 0.75rem;
     padding: 0.5rem 0.75rem;
+  }
+
+  .controls {
+    bottom: 1rem;
+    top: auto;
+    right: 1rem;
+    flex-direction: column;
   }
 }
