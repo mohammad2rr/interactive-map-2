@@ -89,34 +89,81 @@ import { RouterLink } from '@angular/router';
         margin-top: 80px;
       }
       .hero {
-        background: linear-gradient(135deg, #3498db, #2c3e50);
+        background: var(--primary-gradient);
         color: white;
-        padding: 4rem 2rem;
+        padding: 6rem 2rem;
         text-align: center;
+        position: relative;
+        overflow: hidden;
+
+        &::before {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: url('/assets/images/map-pattern.svg') center/cover;
+          opacity: 0.1;
+          animation: float 20s linear infinite;
+        }
       }
+
       .hero-content {
         max-width: 800px;
         margin: 0 auto;
-      }
-      .hero h1 {
-        font-size: 2.5rem;
-        margin-bottom: 1rem;
-      }
-      .hero p {
-        font-size: 1.2rem;
-        margin-bottom: 2rem;
-        opacity: 0.9;
+        position: relative;
+        z-index: 1;
+
+        h1 {
+          font-size: 3.5rem;
+          font-weight: 800;
+          margin-bottom: 1.5rem;
+          background: linear-gradient(to right, #ffffff, rgba(255, 255, 255, 0.8));
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        }
+
+        p {
+          font-size: 1.25rem;
+          margin-bottom: 2.5rem;
+          opacity: 0.9;
+          line-height: 1.7;
+        }
       }
 
       .features {
-        padding: 4rem 2rem;
-        background: #f5f5f5;
+        padding: 6rem 2rem;
+        background: var(--surface-gradient);
+        position: relative;
+
+        &::after {
+          content: "";
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 1px;
+          background: linear-gradient(to right, 
+            transparent 0%, 
+            var(--border-color) 50%,
+            transparent 100%
+          );
+        }
       }
+
       .features h2 {
         text-align: center;
-        color: #2c3e50;
-        margin-bottom: 3rem;
+        color: var(--text-primary);
+        margin-bottom: 4rem;
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
       }
+
       .features-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -124,40 +171,133 @@ import { RouterLink } from '@angular/router';
         max-width: 1200px;
         margin: 0 auto;
       }
+
       .feature-card {
-        background: white;
+        background: var(--surface-gradient);
         padding: 2rem;
-        border-radius: 8px;
+        border-radius: 1rem;
         text-align: center;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-color);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+
+        &::before {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 4px;
+          background: var(--primary-gradient);
+          transform: scaleX(0);
+          transition: transform 0.3s ease;
+        }
+
+        &:hover {
+          transform: translateY(-8px);
+          box-shadow: var(--shadow-hover);
+
+          &::before {
+            transform: scaleX(1);
+          }
+
+          .feature-icon {
+            transform: scale(1.1) rotate(5deg);
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+          }
+        }
       }
+
       .feature-icon {
-        font-size: 2.5rem;
-        margin-bottom: 1rem;
+        font-size: 3rem;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
       }
+
       .feature-card h3 {
-        color: #2c3e50;
+        color: var(--text-primary);
         margin-bottom: 1rem;
+        font-size: 1.5rem;
+        font-weight: 600;
       }
+
       .feature-card p {
-        color: #666;
+        color: var(--text-secondary);
+        line-height: 1.6;
       }
 
       .cta {
-        padding: 4rem 2rem;
+        padding: 6rem 2rem;
         text-align: center;
-        background: white;
+        background: var(--surface-gradient);
+        position: relative;
+        overflow: hidden;
+
+        &::before {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: url('/assets/images/cta-pattern.svg') center/cover;
+          opacity: 0.05;
+          animation: float 15s linear infinite;
+        }
       }
+
       .cta h2 {
-        color: #2c3e50;
-        margin-bottom: 1rem;
+        color: var(--text-primary);
+        margin-bottom: 1.5rem;
+        font-size: 2.5rem;
+        font-weight: 700;
       }
+
       .cta p {
-        color: #666;
+        color: var(--text-secondary);
         margin-bottom: 2rem;
+        font-size: 1.2rem;
         max-width: 600px;
         margin-left: auto;
         margin-right: auto;
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      @keyframes float {
+        from {
+          transform: translateY(0) translateX(0);
+        }
+        to {
+          transform: translateY(-10px) translateX(10px);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .hero {
+          padding: 4rem 1rem;
+        }
+
+        .hero-content h1 {
+          font-size: 2.5rem;
+        }
+
+        .features {
+          padding: 4rem 1rem;
+        }
+
+        .cta {
+          padding: 4rem 1rem;
+        }
       }
     `,
   ],
