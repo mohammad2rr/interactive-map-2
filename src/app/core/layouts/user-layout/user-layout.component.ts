@@ -131,6 +131,17 @@ import { CommonModule } from '@angular/common';
               <span class="icon">⭐</span>
               <span>Favorites</span>
             </a>
+            <a
+              class="modern-nav-link"
+              routerLink="/user/templates"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: false }"
+              [class.text-light]="themeService.isDarkMode()"
+              [class.text-dark]="!themeService.isDarkMode()"
+            >
+              <span class="icon">⭐</span>
+              <span>templates</span>
+            </a>
           </nav>
         </aside>
 
