@@ -14,9 +14,10 @@ export class ThemeService {
 
   initTheme(): void {
     const savedTheme = localStorage.getItem(this.THEME_KEY);
-    const prefersDark = window.matchMedia(
-      '(prefers-color-scheme: dark)'
-    ).matches;
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    // Add transition class to body for smooth color transitions
+    document.body.classList.add('theme-transition');
 
     if (savedTheme) {
       this.setTheme(savedTheme);
@@ -29,9 +30,18 @@ export class ThemeService {
 
   toggleTheme(): void {
     const currentTheme = this.getCurrentTheme();
-    const newTheme =
-      currentTheme === this.DARK_THEME ? this.LIGHT_THEME : this.DARK_THEME;
+    const newTheme = currentTheme === this.DARK_THEME ? this.LIGHT_THEME : this.DARK_THEME;
+
+    // Add transition class
+    document.body.classList.add('theme-transition');
+
+    // Set new theme
     this.setTheme(newTheme);
+
+    // Remove transition class after animation completes
+    setTimeout(() => {
+      document.body.classList.remove('theme-transition');
+    }, 300);
   }
 
   isDarkMode(): boolean {
@@ -39,9 +49,7 @@ export class ThemeService {
   }
 
   private getCurrentTheme(): string {
-    return (
-      document.documentElement.getAttribute('data-theme') || this.LIGHT_THEME
-    );
+    return document.documentElement.getAttribute('data-theme') || this.LIGHT_THEME;
   }
 
   private setTheme(theme: string): void {

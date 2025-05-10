@@ -24,9 +24,11 @@
             [class.btn-outline-light]="themeService.isDarkMode()"
             (click)="toggleTheme()"
           >
-            <span class="icon">{{
-              themeService.isDarkMode() ? "🌙" : "☀️"
-            }}</span>
+            <span class="icon">
+              <i class="material-icons">{{
+                themeService.isDarkMode() ? "dark_mode" : "light_mode"
+              }}</i>
+            </span>
           </button>
           <button
             class="modern-button outline"
@@ -34,7 +36,7 @@
             (click)="toggleSidebar()"
             [attr.aria-expanded]="isSidebarOpen"
           >
-            <span class="icon">☰</span>
+            <span class="icon"><i class="material-icons">menu</i></span>
           </button>
           <div class="d-none d-md-flex align-items-center gap-2">
             <span class="fw-medium">Admin</span>
@@ -72,7 +74,7 @@
           [class.text-light]="themeService.isDarkMode()"
           [class.text-dark]="!themeService.isDarkMode()"
         >
-          <span class="icon">📊</span>
+          <span class="icon"><i class="material-icons">dashboard</i></span>
           <span class="d-none d-md-inline">Dashboard</span>
         </a>
         <a
@@ -92,7 +94,7 @@
           [class.text-light]="themeService.isDarkMode()"
           [class.text-dark]="!themeService.isDarkMode()"
         >
-          <span class="icon">👥</span>
+          <span class="icon"><i class="material-icons">group</i></span>
           <span class="d-none d-md-inline">Users</span>
         </a>
         <a
@@ -102,7 +104,7 @@
           [class.text-light]="themeService.isDarkMode()"
           [class.text-dark]="!themeService.isDarkMode()"
         >
-          <span class="icon">📝</span>
+          <span class="icon"><i class="material-icons">edit</i></span>
           <span class="d-none d-md-inline">Content</span>
         </a>
         <a
@@ -112,7 +114,7 @@
           [class.text-light]="themeService.isDarkMode()"
           [class.text-dark]="!themeService.isDarkMode()"
         >
-          <span class="icon">🗺️</span>
+          <span class="icon"><i class="material-icons">map</i></span>
           <span class="d-none d-md-inline">Maps</span>
         </a>
 
@@ -123,7 +125,7 @@
           [class.text-light]="themeService.isDarkMode()"
           [class.text-dark]="!themeService.isDarkMode()"
         >
-          <span class="icon">⚙️</span>
+          <span class="icon"><i class="material-icons">settings</i></span>
           <span class="d-none d-md-inline">Settings</span>
         </a>
         <a
