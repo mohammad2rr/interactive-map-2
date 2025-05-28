@@ -25,6 +25,12 @@ export const routes: Routes = [
         title: 'Interactive Map - Home',
       },
       {
+        path: 'home',
+        loadComponent: () =>
+          import('./features/home/home.component').then((m) => m.HomeComponent),
+        title: 'Interactive Map - Home',
+      },
+      {
         path: 'about',
         loadComponent: () =>
           import('./features/public/about/about.component').then(

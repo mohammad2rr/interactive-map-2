@@ -16,6 +16,41 @@ export class HomeComponent implements OnInit {
   private width = 1200;
   private height = 800;
 
+  flights = [
+    {
+      airline: 'Emirates',
+      departure: '13:00',
+      arrival: '14:20',
+      duration: '11h 20m',
+      stops: 'Non-Stop',
+      price: 1572,
+    },
+    {
+      airline: 'Qatar Airways',
+      departure: '13:00',
+      arrival: '14:20',
+      duration: '11h 20m',
+      stops: 'Non-Stop',
+      price: 2072,
+    },
+    {
+      airline: 'Lufthansa',
+      departure: '13:00',
+      arrival: '14:20',
+      duration: '11h 20m',
+      stops: 'Non-Stop',
+      price: 1872,
+    },
+    {
+      airline: 'Emirates',
+      departure: '13:00',
+      arrival: '14:20',
+      duration: '11h 20m',
+      stops: 'Non-Stop',
+      price: 1572,
+    },
+  ];
+
   constructor(private router: Router) {}
 
   ngOnInit(): void {

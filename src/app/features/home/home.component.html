@@ -1,7 +1,111 @@
-<div class="container-fluid p-0">
-  <div class="row">
-    <div class="col-12">
-      <div id="world-map" class="vh-100"></div>
+<div class="dashboard-container">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="user-profile">
+      <div class="avatar"></div>
+      <div class="user-info">
+        <h3>Alex Johnson</h3>
+        <p>alex.johnson&#64;gmail.com</p>
+      </div>
     </div>
-  </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li class="active"><span>Dashboard</span></li>
+        <li><span>Flights</span></li>
+        <li><span>Wallet</span></li>
+        <li><span>Reports</span></li>
+        <li><span>Statistics</span></li>
+        <li><span>Settings</span></li>
+      </ul>
+    </nav>
+    <div class="active-users">
+      <p>Active Users</p>
+      <div class="avatars">
+        <div class="avatar small"></div>
+        <div class="avatar small"></div>
+        <div class="avatar small"></div>
+        <div class="avatar small"></div>
+        <div class="avatar small more">+70</div>
+      </div>
+      <div class="sidebar-map"></div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Search Filters -->
+    <section class="search-filters">
+      <div class="filter-row">
+        <div class="filter-group">
+          <button class="filter-btn">New York (JFK)</button>
+          <span class="arrow">→</span>
+          <button class="filter-btn">Mumbai (BOM)</button>
+        </div>
+        <button class="filter-btn">29 July 2019</button>
+        <button class="filter-btn">2 Traveller</button>
+        <button class="filter-btn">First Class</button>
+        <button class="search-btn">Search</button>
+      </div>
+      <div class="trip-type-row">
+        <button class="trip-type active">One Way</button>
+        <button class="trip-type">Round Trip</button>
+        <button class="trip-type">Multi City</button>
+      </div>
+    </section>
+
+    <!-- Results and Filters -->
+    <section class="results-section">
+      <div class="results-header">
+        <span>Result (25)</span>
+        <div class="results-actions">
+          <button class="filter-btn">Filter</button>
+          <button class="filter-btn">Ticket of Class ▼</button>
+        </div>
+      </div>
+      <div class="results-list">
+        <!-- Example Result Card -->
+        <div class="result-card" *ngFor="let flight of flights">
+          <div class="airline-logo"></div>
+          <div class="flight-info">
+            <div class="route">
+              <span class="airport">JFK</span>
+              <span class="airline">{{ flight.airline }}</span>
+              <span class="airport">BOM</span>
+            </div>
+            <div class="details">
+              <span>{{ flight.departure }} - {{ flight.arrival }}</span>
+              <span>{{ flight.duration }}</span>
+              <span>{{ flight.stops }}</span>
+            </div>
+          </div>
+          <div class="price-book">
+            <span class="price">${{ flight.price }}</span>
+            <button class="book-btn">Book Now</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Right Sidebar (Summary Card) -->
+  <aside class="summary-card">
+    <div class="summary-header">
+      <span>From</span>
+      <span class="summary-route"
+        >JFK <span class="non-stop">Non-Stop</span> BOM</span
+      >
+    </div>
+    <div class="summary-map"></div>
+    <div class="summary-filters">
+      <button class="summary-btn active">Non Stop</button>
+      <button class="summary-btn">One Stop</button>
+    </div>
+    <div class="summary-price-range">
+      <span>Price</span>
+      <div class="price-slider">
+        <span>$500</span>
+        <span>$2500</span>
+      </div>
+    </div>
+  </aside>
 </div>
