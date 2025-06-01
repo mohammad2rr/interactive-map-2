@@ -31,6 +31,12 @@ export const routes: Routes = [
         title: 'Interactive Map - Home',
       },
       {
+        path: 'timeline-host',
+        loadComponent: () =>
+          import('./features/timeline-host/timeline-host.component').then((m) => m.TimeLineHostComponent),
+        title: 'Interactive Map - ',
+      },
+      {
         path: 'about',
         loadComponent: () =>
           import('./features/public/about/about.component').then(

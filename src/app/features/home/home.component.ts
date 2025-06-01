@@ -3,11 +3,14 @@ import { Router } from '@angular/router';
 import * as d3 from 'd3';
 import * as topojson from 'topojson';
 import { FeatureCollection } from 'geojson';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss'],
+  standalone:true,
+  imports:[ CommonModule]
 })
 export class HomeComponent implements OnInit {
   private svg: any;

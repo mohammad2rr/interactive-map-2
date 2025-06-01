@@ -1,0 +1,24 @@
+<div class="timeline-container" [ngClass]="{'timeline-responsive': responsive, 'timeline-top': align === 'top', 'timeline-bottom': align === 'bottom'}">
+    <div class="timeline-horizontal">
+      <div class="timeline-event" *ngFor="let event of events; let i = index; trackBy: trackByFn"
+           [ngClass]="{'active': i === activeIndex, 'completed': event.completed}"
+           (click)="onEventClick(event, i)">
+        
+        <div class="timeline-event-content">
+          <div class="timeline-event-icon" *ngIf="event.icon" [ngStyle]="{'background-color': event.color}"  >
+            <i [class]="event.icon"></i>
+          </div>
+          <div class="timeline-event-dot" *ngIf="!event.icon" [ngStyle]="{'background-color': event.color}"></div>
+          
+          <div class="timeline-event-details">
+            <h5 class="timeline-event-title">{{event.title}}</h5>
+            <small class="timeline-event-date" *ngIf="event.date">{{event.date}}</small>
+            <p class="timeline-event-description" *ngIf="event.description">{{event.description}}</p>
+          </div>
+        </div>
+        
+        <div class="timeline-connector" *ngIf="showConnector && i < events.length - 1" 
+             [ngStyle]="{'background-color': connectorColor}"></div>
+      </div>
+    </div>
+  </div>
