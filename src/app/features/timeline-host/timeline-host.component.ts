@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HorizontalTimelineComponent } from '../../shared/components/horizontal-timeline/horizontal-timeline.component';
+import { HierarchicalHorizontalTimelineComponent, TimelineEvent } from '../../shared/components/hierarchical-horizontal-timeline/hierarchical-horizontal-timeline.component';
 
 @Component({
   selector: 'app-timeline-host',
   standalone: true,
-  imports: [CommonModule,HorizontalTimelineComponent],
+  imports: [CommonModule,HorizontalTimelineComponent,HierarchicalHorizontalTimelineComponent],
   template: `
     <div class="about-container">
       <div class="about-content">
@@ -25,8 +26,21 @@ import { HorizontalTimelineComponent } from '../../shared/components/horizontal-
         </div>
 
         <div class="about-section">
-       
-        </div>
+         <h1>Project Timeline</h1>
+           <app-hierarchical-horizontal-timeline 
+              [events]="projectTimeline" 
+              [activeIndex]="activeIndex"
+              (eventClick)="onTimelineEventClick($event)"
+              [maxLevel]="3"
+              [connectorColor]="'#6c757d'">
+           </app-hierarchical-horizontal-timeline>
+    
+          <div class="event-details" *ngIf="selectedEvent">
+          <h2>{{selectedEvent.title}}</h2>
+          <p *ngIf="selectedEvent.date"><strong>Date:</strong> {{selectedEvent.date}}</p>
+          <p *ngIf="selectedEvent.description">{{selectedEvent.description}}</p>
+       </div>
+      </div>
       </div>
     </div>
   `,
@@ -76,6 +90,12 @@ import { HorizontalTimelineComponent } from '../../shared/components/horizontal-
         color: #2ecc71;
         margin-right: 0.5rem;
       }
+      .event-details {
+      margin-top: 2rem;
+      padding: 1rem;
+      border: 1px solid #eee;
+      border-radius: 4px;
+    }
     `,
   ],
 })
@@ -157,4 +177,84 @@ export class TimeLineHostComponent {
     onEventClick(event: any): void {
       console.log('Event clicked:', event);
     }
+
+
+   // activeIndex = 0;
+  selectedEvent: TimelineEvent | null = null;
+
+  projectTimeline: TimelineEvent[] = [
+    {
+      title: 'Project Initiation',
+      icon: 'fas fa-flag',
+      color: '#4CAF50',
+      date: 'Jan 2023',
+      description: 'Project kickoff and initial planning',
+      children: [
+        {
+          title: 'Requirements Gathering',
+          icon: 'fas fa-clipboard-list',
+          color: '#4CAF50',
+          date: 'Jan 5-15, 2023',
+          children: [
+            { title: 'Client Interviews', date: 'Jan 5-8' },
+            { title: 'Document Review', date: 'Jan 9-12' }
+          ]
+        },
+        {
+          title: 'Team Formation',
+          icon: 'fas fa-users',
+          color: '#2196F3',
+          date: 'Jan 16-20, 2023'
+        }
+      ]
+    },
+    {
+      title: 'Development Phase',
+      icon: 'fas fa-code',
+      color: '#2196F3',
+      date: 'Feb-Mar 2023',
+      children: [
+        {
+          title: 'Frontend Development',
+          icon: 'fas fa-desktop',
+          color: '#2196F3',
+          date: 'Feb 1-28, 2023',
+          children: [
+            { title: 'UI Components', completed: true },
+            { title: 'State Management' }
+          ]
+        },
+        {
+          title: 'Backend Development',
+          icon: 'fas fa-server',
+          color: '#673AB7',
+          date: 'Mar 1-31, 2023'
+        }
+      ]
+    },
+    {
+      title: 'Testing',
+      icon: 'fas fa-bug',
+      color: '#FF9800',
+      date: 'Apr 2023',
+      children: [
+        { title: 'Unit Testing' },
+        { title: 'Integration Testing' }
+      ]
+    },
+    {
+      title: 'Deployment',
+      icon: 'fas fa-rocket',
+      color: '#E91E63',
+      date: 'May 2023'
+    }
+  ];
+
+  onTimelineEventClick(event: TimelineEvent): void {
+    this.selectedEvent = event;
+    // You could also add additional logic here like:
+    // - Navigating to a specific route
+    // - Loading detailed content
+    // - Triggering animations
+  }
 }
