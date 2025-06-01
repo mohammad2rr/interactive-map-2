@@ -5,36 +5,71 @@
        'timeline-bottom': align === 'bottom'
      }">
   <div class="timeline-horizontal">
-    <div class="timeline-event" 
-         *ngFor="let event of visibleEvents; let i = index; trackBy: trackByFn"
-         [ngClass]="getEventClasses(event, i)"
-         [style.margin-left]="getEventMargin(event)"
-         (click)="onEventClick(event, i)">
-      
-      <div class="timeline-event-content">
-        <div class="timeline-event-icon" 
-             *ngIf="event.icon" 
-             [ngStyle]="{'background-color': event.color}"
-             [class.has-children]="event.children && event.children.length > 0"
-             [class.expanded]="event.expanded">
-          <i [class]="event.icon"></i>
-        </div>
-        <div class="timeline-event-dot" 
-             *ngIf="!event.icon" 
-             [ngStyle]="{'background-color': event.color}"
-             [class.has-children]="event.children && event.children.length > 0"
-             [class.expanded]="event.expanded"></div>
+    <div *ngFor="let event of events; let i = index; trackBy: trackByFn">
+      <!-- Parent event -->
+      <div class="timeline-event" 
+           [ngClass]="getEventClasses(event, i)"
+           (click)="onEventClick(event, i)">
         
-        <div class="timeline-event-details">
-          <h5 class="timeline-event-title">{{event.title}}</h5>
-          <small class="timeline-event-date" *ngIf="event.date">{{event.date}}</small>
-          <p class="timeline-event-description" *ngIf="event.description">{{event.description}}</p>
+        <div class="timeline-event-content">
+          <div class="timeline-event-icon" 
+               *ngIf="event.icon" 
+               [ngStyle]="{'background-color': event.color}"
+               [class.has-children]="event.children && event.children.length > 0"
+               [class.expanded]="event.expanded">
+            <i [class]="event.icon"></i>
+          </div>
+          <div class="timeline-event-dot" 
+               *ngIf="!event.icon" 
+               [ngStyle]="{'background-color': event.color}"
+               [class.has-children]="event.children && event.children.length > 0"
+               [class.expanded]="event.expanded"></div>
+          
+          <div class="timeline-event-details">
+            <h5 class="timeline-event-title">{{event.title}}</h5>
+            <small class="timeline-event-date" *ngIf="event.date">{{event.date}}</small>
+            <p class="timeline-event-description" *ngIf="event.description">{{event.description}}</p>
+          </div>
         </div>
+        
+        <div class="timeline-connector" 
+             *ngIf="showConnector && i < events.length - 1" 
+             [ngStyle]="{'background-color': connectorColor}"></div>
       </div>
       
-      <div class="timeline-connector" 
-           *ngIf="showConnector && !isLastInLevel(event, i) && (!event.parentId || isLastInLevel(event, i))" 
-           [ngStyle]="{'background-color': connectorColor}"></div>
+      <!-- Child events container -->
+      <div class="child-events-container" *ngIf="event.expanded && event.children && event.children.length > 0">
+        <div class="child-events-connector"></div>
+        <div class="child-events">
+          <ng-container *ngFor="let child of event.children; let j = index">
+            <div class="timeline-event child-event" 
+                 [ngClass]="getEventClasses(child, j)"
+                 (click)="onEventClick(child, j)">
+              
+              <div class="timeline-event-content">
+                <div class="timeline-event-icon" 
+                     *ngIf="child.icon" 
+                     [ngStyle]="{'background-color': child.color}"
+                     [class.has-children]="child.children && child.children.length > 0"
+                     [class.expanded]="child.expanded">
+                  <i [class]="child.icon"></i>
+                </div>
+                <div class="timeline-event-dot" 
+                     *ngIf="!child.icon" 
+                     [ngStyle]="{'background-color': child.color}"
+                     [class.has-children]="child.children && child.children.length > 0"
+                     [class.expanded]="child.expanded"></div>
+                
+                <div class="timeline-event-details">
+                  <h5 class="timeline-event-title">{{child.title}}</h5>
+                  <small class="timeline-event-date" *ngIf="child.date">{{child.date}}</small>
+                  <p class="timeline-event-description" *ngIf="child.description">{{child.description}}</p>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+      </div>
     </div>
   </div>
 </div>

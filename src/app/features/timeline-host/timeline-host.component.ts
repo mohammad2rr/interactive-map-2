@@ -31,7 +31,7 @@ import { HierarchicalHorizontalTimelineComponent, TimelineEvent } from '../../sh
               [events]="projectTimeline" 
               [activeIndex]="activeIndex"
               (eventClick)="onTimelineEventClick($event)"
-              [maxLevel]="3"
+              
               [connectorColor]="'#6c757d'">
            </app-hierarchical-horizontal-timeline>
     
@@ -48,7 +48,7 @@ import { HierarchicalHorizontalTimelineComponent, TimelineEvent } from '../../sh
     `
       .about-container {
         padding: 2rem;
-        max-width: 1200px;
+        max-width: 1600px;
         margin: 0 auto;
       }
       .about-content {
@@ -183,6 +183,71 @@ export class TimeLineHostComponent {
   selectedEvent: TimelineEvent | null = null;
 
   projectTimeline: TimelineEvent[] = [
+    {
+      title: 'Project Initiation',
+      icon: 'fas fa-flag',
+      color: '#4CAF50',
+      date: 'Jan 2023',
+      description: 'Project kickoff and initial planning',
+      children: [
+        {
+          title: 'Requirements Gathering',
+          icon: 'fas fa-clipboard-list',
+          color: '#4CAF50',
+          date: 'Jan 5-15, 2023',
+          children: [
+            { title: 'Client Interviews', date: 'Jan 5-8' },
+            { title: 'Document Review', date: 'Jan 9-12' }
+          ]
+        },
+        {
+          title: 'Team Formation',
+          icon: 'fas fa-users',
+          color: '#2196F3',
+          date: 'Jan 16-20, 2023'
+        }
+      ]
+    },
+    {
+      title: 'Development Phase',
+      icon: 'fas fa-code',
+      color: '#2196F3',
+      date: 'Feb-Mar 2023',
+      children: [
+        {
+          title: 'Frontend Development',
+          icon: 'fas fa-desktop',
+          color: '#2196F3',
+          date: 'Feb 1-28, 2023',
+          children: [
+            { title: 'UI Components', completed: true },
+            { title: 'State Management' }
+          ]
+        },
+        {
+          title: 'Backend Development',
+          icon: 'fas fa-server',
+          color: '#673AB7',
+          date: 'Mar 1-31, 2023'
+        }
+      ]
+    },
+    {
+      title: 'Testing',
+      icon: 'fas fa-bug',
+      color: '#FF9800',
+      date: 'Apr 2023',
+      children: [
+        { title: 'Unit Testing' },
+        { title: 'Integration Testing' }
+      ]
+    },
+    {
+      title: 'Deployment',
+      icon: 'fas fa-rocket',
+      color: '#E91E63',
+      date: 'May 2023'
+    },
     {
       title: 'Project Initiation',
       icon: 'fas fa-flag',
