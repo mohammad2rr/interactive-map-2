@@ -67,6 +67,22 @@ import { CommonModule } from '@angular/common';
                     >About</a
                   >
                 </li>
+                <li class="nav-item">
+                  <a
+                    class="nav-link px-3 py-2 rounded-3"
+                    routerLink="/timeline-host"
+                    routerLinkActive="active"
+                    >timeline-host</a
+                  >
+                </li>
+                <li class="nav-item">
+                  <a
+                    class="nav-link px-3 py-2 rounded-3"
+                    routerLink="/home"
+                    routerLinkActive="active"
+                    >home</a
+                  >
+                </li>
                 <!-- <li class="nav-item">
                   <a
                     class="nav-link px-3 py-2 rounded-3"
